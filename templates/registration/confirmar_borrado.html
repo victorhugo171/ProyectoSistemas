@@ -1,0 +1,13 @@
+<body style="font-family: Arial; background: #02ffab; text-align: center; padding-top: 50px;">
+    <div style="background: white; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+        <h2>¿Eliminar usuario?</h2>
+        <p>Estás a punto de borrar a: <strong>{{ object.username }}</strong></p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" style="background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                Sí, Eliminar Permanentemente
+            </button>
+            <a href="{% url 'home' %}" style="display: block; margin-top: 15px; color: #666;">Cancelar y Volver</a>
+        </form>
+    </div>
+</body>

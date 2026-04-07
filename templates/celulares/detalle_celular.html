@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de {{ celular.nombre }}{% endblock %}
+
+{% block content %}
+<style>
+    .detail-card {
+        background: var(--card-bg);
+        border-radius: 24px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        padding: 40px;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .detail-header {
+        margin-bottom: 32px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .detail-header h2 {
+        font-weight: 800;
+        font-size: 1.8rem;
+        letter-spacing: -0.5px;
+        margin: 0;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 48px;
+    }
+
+    .img-display {
+        text-align: center;
+    }
+
+    .img-main-box {
+        background: #f3f4f6;
+        border-radius: 24px;
+        padding: 40px;
+        margin-bottom: 24px;
+        height: 450px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-color);
+    }
+
+    .img-main-box img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .thumbs-container {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+    .thumb-item {
+        width: 72px;
+        height: 72px;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        cursor: pointer;
+        padding: 4px;
+        background: #fff;
+        transition: 0.2s;
+    }
+
+    .thumb-item:hover, .thumb-item.active {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .thumb-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .specs-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .spec-item {
+        background: #fafafa;
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid #f3f4f6;
+    }
+
+    .spec-item.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .spec-label {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .spec-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .price-value {
+        font-size: 2rem;
+        font-weight: 900;
+        color: var(--primary);
+        letter-spacing: -1px;
+    }
+
+    .actions-footer {
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-back {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.2s;
+    }
+
+    .btn-back:hover {
+        color: var(--primary);
+    }
+
+    .btn-edit {
+        background: var(--primary);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: 0.2s;
+        box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-edit:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+    }
+
+    @media (max-width: 992px) {
+        .detail-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="detail-card">
+    <div class="detail-header">
+        <div>
+            <h2>{{ celular.nombre }}</h2>
+            <p class="text-muted mb-0">SKU: {{ celular.sku_codigo }} | Tipo: {{ celular.tipo }}</p>
+        </div>
+        <div class="tag {% if celular.stock > 0 %}active{% endif %}">
+            {% if celular.stock > 0 %} En Stock {% else %} Sin Stock {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <div class="img-display">
+            <div class="img-main-box">
+                {% if celular.imagen1 %}
+                    <img id="mainImage" src="{{ celular.imagen1.url }}" alt="{{ celular.nombre }}">
+                {% else %}
+                    <div class="text-muted">No hay imagen disponible</div>
+                {% endif %}
+            </div>
+
+            <div class="thumbs-container">
+                {% if celular.imagen1 %}
+                <div class="thumb-item active" onclick="swapImage('{{ celular.imagen1.url }}', this)">
+                    <img src="{{ celular.imagen1.url }}">
+                </div>
+                {% endif %}
+                {% if celular.imagen2 %}
+                <div class="thumb-item" onclick="swapImage('{{ celular.imagen2.url }}', this)">
+                    <img src="{{ celular.imagen2.url }}">
+                </div>
+                {% endif %}
+                {% if celular.imagen3 %}
+                <div class="thumb-item" onclick="swapImage('{{ celular.imagen3.url }}', this)">
+                    <img src="{{ celular.imagen3.url }}">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="specs-list">
+            <div class="spec-item full-width">
+                <span class="spec-label">Precio Final</span>
+                <span class="price-value">Bs {{ celular.precio }}</span>
+            </div>
+            
+            <div class="spec-item">
+                <span class="spec-label">Disponibilidad</span>
+                <span class="spec-value">{{ celular.stock }} unidades</span>
+            </div>
+
+            <div class="spec-item">
+                <span class="spec-label">Estado</span>
+                <span class="spec-value">{{ celular.estado }}</span>
+            </div>
+
+            <div class="spec-item full-width">
+                <span class="spec-label">Descripción del Producto</span>
+                <p class="spec-value mb-0" style="font-weight: 500; line-height: 1.6;">
+                    {{ celular.descripcion|default:"Este producto no cuenta con una descripción detallada en este momento." }}
+                </p>
+            </div>
+            
+            <!-- Botón de compra rápido -->
+            <div class="spec-item full-width mt-3">
+                <a href="{% url 'agregar_carrito' celular.pk %}" class="btn-buy d-block w-100">
+                    <i class="fas fa-shopping-cart me-2"></i> Añadir a mi bolsa
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions-footer">
+        <a href="{% url 'inicio' %}" class="btn-back">
+            <i class="fas fa-chevron-left"></i> Volver al Catálogo
+        </a>
+        
+        {% if user.is_superuser %}
+        <a href="{% url 'editar_celular' celular.pk %}" class="btn-edit">
+            <i class="fas fa-edit me-2"></i> Editar Producto
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function swapImage(url, thumb) {
+        document.getElementById('mainImage').src = url;
+        document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+        thumb.classList.add('active');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}Catálogo de Celulares{% endblock %}
+
+{% block content %}
+<style>
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 32px;
+    }
+
+    .product-card {
+        background: var(--card-bg);
+        border-radius: 24px;
+        padding: 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-color: var(--primary);
+    }
+
+    .image-container {
+        background-color: #f3f4f6;
+        border-radius: 20px;
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+        overflow: hidden;
+        position: relative;
+        transition: transformar 0.3s;
+    }
+
+    .product-card:hover .image-container img {
+        transform: scale(1.05);
+    }
+
+    .image-container img {
+        max-width: 80%;
+        max-height: 80%;
+        object-fit: contain;
+        transition: 0.5s ease;
+    }
+
+    .product-info h3 {
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin-bottom: 6px;
+        color: #111827;
+        letter-spacing: -0.3px;
+    }
+
+    .product-sku {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+    }
+
+    .product-meta {
+        font-size: 0.85rem;
+        color: #4b5563;
+        margin-bottom: 8px;
+    }
+
+    .color-dots {
+        display: flex;
+        gap: 8px;
+        margin: 16px 0;
+    }
+
+    .dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 6px;
+        border: 2px solid #fff;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .storage-tags {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+    }
+
+    .tag {
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 4px 12px;
+        border-radius: 8px;
+        background: #f3f4f6;
+        color: #374151;
+        text-transform: uppercase;
+    }
+
+    .tag.active {
+        background: var(--primary);
+        color: #fff;
+    }
+
+    .price-tag {
+        font-size: 1.75rem;
+        font-weight: 900;
+        margin: 12px 0;
+        color: #111827;
+        letter-spacing: -1px;
+    }
+
+    .action-buttons {
+        margin-top: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .btn-buy {
+        background: var(--primary);
+        color: #fff;
+        border-radius: 12px;
+        padding: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        text-decoration: none;
+        text-align: center;
+        border: none;
+        transition: 0.2s all;
+        box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-buy:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+        color: #fff;
+    }
+
+    .btn-info {
+        background: #fff;
+        color: #111827;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 12px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-decoration: none;
+        text-align: center;
+        transition: 0.2s all;
+    }
+
+    .btn-info:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+        color: #000;
+    }
+
+</style>
+
+<div class="product-grid">
+    {% for c in celulares %}
+    <div class="product-card">
+        <div class="image-container">
+            {% if c.imagen1 %}
+                <img src="{{ c.imagen1.url }}" alt="{{ c.modelo }}">
+            {% else %}
+                <span class="text-muted">Sin Imagen</span>
+            {% endif %}
+        </div>
+
+        <div class="product-info">
+            <h3>{{ c.nombre }}</h3>
+            <div class="product-sku">{{ c.sku_codigo }}</div>
+            
+            <div class="product-meta">Tipo: <span class="text-muted">{{ c.tipo }}</span></div>
+            <div class="color-dots">
+                <div class="dot" style="background-color: #34495e;"></div>
+                <div class="dot" style="background-color: #7f8c8d;"></div>
+                <div class="dot" style="background-color: #2c3e50;"></div>
+                <div class="dot" style="background-color: #ecf0f1;"></div>
+            </div>
+
+            <div class="storage-tags">
+                <span class="tag active">Stock: {{ c.stock }}</span>
+                <span class="tag">Estado: {{ c.estado }}</span>
+            </div>
+
+            <div class="price-tag">
+                Bs {{ c.precio }}
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="{% url 'agregar_carrito' c.pk %}" class="btn-buy">Comprar Ahora</a>
+            <a href="{% url 'detalle_celular' c.pk %}" class="btn-info">Más Información</a>
+        </div>
+        
+        {% if user.is_superuser %}
+        <div class="d-flex gap-2 mt-3 pt-3 border-top">
+            <a href="{% url 'editar_celular' c.pk %}" class="btn btn-sm btn-outline-primary w-50">Editar</a>
+            <a href="{% url 'eliminar_celular' c.pk %}" class="btn btn-sm btn-outline-danger w-50">Borrar</a>
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="text-center py-5 w-100">
+        <h3 class="text-muted">No hay celulares disponibles en este momento.</h3>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

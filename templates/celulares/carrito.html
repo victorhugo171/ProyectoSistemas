@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Carrito de Compras{% endblock %}
+
+{% block content %}
+<style>
+    .cart-card {
+        background: var(--card-bg);
+        border-radius: 24px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        padding: 48px;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .cart-header {
+        margin-bottom: 40px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .cart-header i {
+        font-size: 1.75rem;
+        color: var(--primary);
+    }
+
+    .cart-header h2 {
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.5px;
+        color: #111827;
+    }
+
+    .table-cart {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 12px;
+    }
+
+    .table-cart th {
+        color: var(--text-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        padding: 0 24px;
+        letter-spacing: 1px;
+    }
+
+    .table-cart td {
+        background: #fdfdfd;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+        padding: 24px;
+        transition: 0.2s;
+    }
+
+    .table-cart tr:hover td {
+        background: #fff;
+        border-color: var(--primary);
+    }
+
+    .table-cart td:first-child {
+        border-left: 1px solid var(--border-color);
+        border-radius: 16px 0 0 16px;
+    }
+
+    .table-cart td:last-child {
+        border-right: 1px solid var(--border-color);
+        border-radius: 0 16px 16px 0;
+    }
+
+    .product-title {
+        font-weight: 800;
+        color: #111827;
+        font-size: 1.05rem;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .product-sku {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .price-subtotal {
+        font-weight: 800;
+        color: #111827;
+        font-size: 1.1rem;
+    }
+
+    .total-section {
+        margin-top: 48px;
+        padding-top: 32px;
+        border-top: 1px dashed var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 32px;
+    }
+
+    .total-label {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        font-weight: 700;
+    }
+
+    .total-amount {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #111827;
+        letter-spacing: -1.5px;
+    }
+
+    .btn-checkout {
+        background: var(--primary);
+        color: #fff;
+        padding: 16px 64px;
+        border-radius: 14px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: 0.2s all;
+        border: none;
+        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-checkout:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
+        color: #fff;
+    }
+
+    .empty-cart {
+        text-align: center;
+        padding: 100px 0;
+    }
+
+    .empty-cart i {
+        color: var(--border-color);
+        margin-bottom: 24px;
+    }
+
+    .btn-explore {
+        background: #111827;
+        color: #fff;
+        border-radius: 14px;
+        padding: 14px 48px;
+        font-weight: 800;
+        transition: 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-explore:hover {
+        background: #1f2937;
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="cart-card">
+    {% if items %}
+    <div class="cart-header">
+        <i class="fas fa-shopping-bag"></i>
+        <h2>Resumen de Compra</h2>
+    </div>
+
+    <table class="table-cart">
+        <thead>
+            <tr>
+                <th style="width: 45%;">Producto</th>
+                <th>Precio</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-end">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>
+                    <span class="product-title">{{ item.producto.nombre }}</span>
+                    <span class="product-sku">SKU: {{ item.producto.sku_codigo }}</span>
+                </td>
+                <td class="fw-semibold">Bs {{ item.producto.precio }}</td>
+                <td class="text-center">
+                    <span class="badge bg-white text-dark px-3 py-2 border rounded-pill shadow-sm">{{ item.cantidad }}</span>
+                </td>
+                <td class="text-end price-subtotal">Bs {{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <span class="total-label">Total a pagar:</span>
+        <span class="total-amount">Bs {{ total }}</span>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-5">
+        <a href="{% url 'inicio' %}" class="text-decoration-none text-muted fw-bold">
+            <i class="fas fa-arrow-left me-2"></i> Continuar comprando
+        </a>
+        <button class="btn-checkout">Pagar Ahora</button>
+    </div>
+
+    {% else %}
+    <div class="empty-cart">
+        <i class="fas fa-shopping-basket fa-5x mb-4"></i>
+        <h3 class="fw-bold mb-2">Tu bolsa está vacía</h3>
+        <p class="text-muted mb-4">Parece que aún no has decidido qué celular llevarte.</p>
+        <a href="{% url 'inicio' %}" class="btn-explore">Explorar Tienda</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

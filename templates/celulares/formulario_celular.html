@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .form-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 20px;
+        padding-bottom: 50px;
+    }
+
+    .main-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        max-width: 650px;
+        width: 100%;
+        overflow: hidden;
+        border: 1px solid #e0e0e0;
+        margin: 0 auto;
+    }
+
+    .card-header-custom {
+        background-color: #343a40 !important;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        border-bottom: 2px solid #23272b;
+    }
+
+    .form-body {
+        padding: 30px;
+    }
+
+    .form-control {
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+    }
+
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+</style>
+
+<div class="form-wrapper">
+    <div class="main-card">
+        <div class="card-header-custom d-flex align-items-center justify-content-center gap-2">
+            <i class="fas fa-microchip fs-4"></i>
+            <h4 class="mb-0 fw-bold">Especificaciones del Celular</h4>
+        </div>
+
+        <div class="form-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <div class="form-text text-muted small">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <hr class="my-4 text-muted">
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'lista_celulares' %}" class="btn btn-light border px-4">Cancelar</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-medium">
+                        <i class="fas fa-save me-1"></i> Guardar en Inventario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('input, select, textarea').forEach(function(el) {
+        if (el.type !== 'checkbox') {
+            el.classList.add('form-control');
+        }
+    });
+</script>
+{% endblock %}

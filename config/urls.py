@@ -5,7 +5,9 @@ from django.conf.urls.static import static
 from Login.views import (
     RegistroUsuario, UsuarioABMView, UsuarioUpdateView, UsuarioDeleteView,
     CelularListView, CelularCreateView, CelularUpdateView, CelularDeleteView,
-    CelularDetailView, agregar_al_carrito, ver_carrito
+    CelularDetailView, agregar_al_carrito, ver_carrito,
+    procesar_venta, detalle_factura, ClienteCreateView,
+    restar_del_carrito, eliminar_item_carrito
 )
 
 urlpatterns = [
@@ -29,6 +31,11 @@ urlpatterns = [
     
     path('carrito/', ver_carrito, name='ver_carrito'),
     path('carrito/agregar/<int:pk>/', agregar_al_carrito, name='agregar_carrito'),
+    path('carrito/restar/<int:pk>/', restar_del_carrito, name='restar_carrito'),
+    path('carrito/eliminar/<int:pk>/', eliminar_item_carrito, name='eliminar_item_carrito'),
+    path('carrito/procesar/', procesar_venta, name='procesar_venta'),
+    path('factura/<int:pk>/', detalle_factura, name='detalle_factura'),
+    path('cliente/nuevo/', ClienteCreateView.as_view(), name='crear_cliente'),
 ]
 
 if settings.DEBUG:

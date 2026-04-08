@@ -1,150 +1,224 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel ABM - Gestión de Usuarios</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { 
-            background: #f4f7f6;
-            margin: 0; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            padding: 40px 20px;
-        }
-        .abm-card { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-            width: 100%; 
-            max-width: 900px; 
-            margin: 0 auto;
-        }
-        .header-abm {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            flex-wrap: wrap; 
-        }
-        .header-abm div {
-            display: flex;
-            gap: 15px;
-        }
-        .header-abm h2 { 
-            margin: 0; 
-            color: #2c3e50; 
-            font-weight: 700;
-            font-size: 1.75rem;
-            display: flex;
-            align-items: center;
-        }
-        .header-abm h2 i {
-            margin-right: 10px;
-            color: #6c757d;
-        }
-        .btn-icon {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
-        }
-        .table {
-            vertical-align: middle;
-        }
-        .table th {
-            font-weight: 600;
-            color: #495057;
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-        }
-        .table tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-        .actions-col {
-            width: 180px;
-            text-align: right;
-        }
-        .user-info {
-            background: #e9ecef;
-            padding: 10px 15px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            color: #495057;
-            font-weight: 500;
-            margin-bottom: 20px;
-        }
-        .btn-logout {
-            margin-top: 30px;
-        }
-        @media (max-width: 768px) {
-            .header-abm { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .header-abm div { width: 100%; flex-wrap: wrap; }
-            .header-abm div .btn { flex-grow: 1; }
-        }
-    </style>
-</head>
-<body>
 
-<div class="abm-card">
-    <div class="header-abm">
-        <h2><i class="fas fa-users-cog"></i> Gestión de Usuarios</h2>
-        
-        <div> 
-            <a href="{% url 'lista_celulares' %}" class="btn btn-outline-primary btn-icon">
-                <i class="fas fa-mobile-alt"></i> Panel de Celulares
-            </a>
-            <a href="{% url 'registrar' %}" class="btn btn-primary btn-icon">
-                <i class="fas fa-user-plus"></i> Nuevo Usuario
-            </a>
-        </div>
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-title h2 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #111827;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .page-title p {
+        color: #6b7280;
+        margin: 4px 0 0 0;
+        font-size: 0.95rem;
+    }
+
+    .abm-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+    .table-container {
+        padding: 0;
+    }
+
+    .table {
+        margin-bottom: 0;
+        width: 100%;
+    }
+
+    .table thead th {
+        background-color: #f9fafb;
+        border-bottom: 1px solid var(--border-color);
+        padding: 16px 24px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #4b5563;
+    }
+
+    .table tbody td {
+        padding: 16px 24px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.9rem;
+        color: #374151;
+    }
+
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        background-color: #e5e7eb;
+        color: #4b5563;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-right: 12px;
+    }
+
+    .username-cell {
+        display: flex;
+        align-items: center;
+    }
+
+    .badge-admin {
+        background-color: #fef2f2;
+        color: #dc2626;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 700;
+        margin-left: 8px;
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: white;
+        color: #4b5563;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-action:hover {
+        background: #f3f4f6;
+        color: #111827;
+    }
+
+    .btn-action.btn-edit:hover {
+        border-color: #fbbf24;
+        color: #d97706;
+        background: #fffbeb;
+    }
+
+    .btn-action.btn-delete:hover {
+        border-color: #f87171;
+        color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .btn-create {
+        background: var(--primary);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all 0.2s;
+        box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn-create:hover {
+        background: var(--primary-hover);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+    }
+</style>
+
+<div class="page-header">
+    <div class="page-title">
+        <h2>Gestión de Usuarios</h2>
+        <p>Administra los accesos y roles del sistema</p>
     </div>
-
-    <div class="user-info">
-        <i class="fas fa-user-circle fs-4 text-secondary"></i>
-        <span>Conectado como: <strong>{{ user.username }}</strong></span>
-    </div>
-
-    <div class="table-responsive">
-        <table class="table mb-0">
-            <thead>
-                <tr>
-                    <th><i class="fas fa-user me-2"></i>Nombre de Usuario</th>
-                    <th class="actions-col">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in usuarios %} 
-                <tr>
-                    <td><span class="fw-medium text-dark">{{ u.username }}</span></td>
-                    <td class="actions-col">
-                        <a href="{% url 'editar_usuario' u.id %}" class="btn btn-sm btn-warning mb-1" title="Editar"><i class="fas fa-edit"></i> Editar</a>
-                        <a href="{% url 'eliminar_usuario' u.id %}" class="btn btn-sm btn-danger mb-1" title="Eliminar"><i class="fas fa-trash-alt"></i> Eliminar</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="2" class="text-center py-4 text-muted">No hay usuarios registrados en el sistema.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <form action="{% url 'logout' %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-secondary btn-icon btn-logout">
-            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-        </button>
-    </form>
+    <a href="{% url 'registrar' %}" class="btn-create">
+        <i class="fas fa-plus"></i> Nuevo Usuario
+    </a>
 </div>
 
-</body>
-</html>
+<div class="abm-card">
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td>
+                            <div class="username-cell">
+                                <div class="user-avatar">{{ u.username.0|upper }}</div>
+                                <div>
+                                    <span class="fw-bold">{{ u.username }}</span>
+                                    {% if u.is_superuser %}
+                                    <span class="badge-admin">Admin</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill bg-success-subtle text-success px-3" style="font-size: 0.75rem;">Activo</span>
+                        </td>
+                        <td>
+                            <div class="actions-cell">
+                                <a href="{% url 'editar_usuario' u.id %}" class="btn-action btn-edit" title="Editar">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                                <a href="{% url 'eliminar_usuario' u.id %}" class="btn-action btn-delete" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-5 text-muted">
+                            <i class="fas fa-users-slash d-block mb-2 fs-2"></i>
+                            No hay usuarios registrados
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

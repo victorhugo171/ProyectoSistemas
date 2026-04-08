@@ -69,6 +69,20 @@ class Producto(models.Model):
     def __str__(self):
         return f"{self.nombre} ({self.sku_codigo})"
 
+    def reducir_stock(self, cantidad, usuario, motivo="Venta"):
+        if self.stock >= cantidad:
+            self.stock -= cantidad
+            self.save()
+            MovimientoInventario.objects.create(
+                producto=self,
+                usuario=usuario,
+                tipo_movimiento='Salida',
+                cantidad=cantidad,
+                motivo=motivo
+            )
+            return True
+        return False
+
 # --- VENTA ---
 class Venta(models.Model):
     ESTADO_CHOICES = [
@@ -86,6 +100,31 @@ class Venta(models.Model):
 
     class Meta:
         db_table = 'venta'
+
+    def finalizar_venta(self, metodo_pago='Efectivo'):
+        """Genera el pago y la factura para esta venta."""
+        self.estado = 'Pagada'
+        self.save()
+        
+        # Crear Pago
+        pago = Pago.objects.create(
+            venta=self,
+            metodo=metodo_pago,
+            monto=self.total,
+            estado='Completado'
+        )
+        
+        # Crear Factura con número correlativo simple
+        ultimo_id = Factura.objects.all().order_by('id_factura').last()
+        nuevo_numero = f"FAC-{ (ultimo_id.id_factura + 1) if ultimo_id else 1:06d}"
+        
+        factura = Factura.objects.create(
+            venta=self,
+            numero=nuevo_numero,
+            total=self.total,
+            estado='Emitida'
+        )
+        return factura
 
 # --- DETALLE_VENTA ---
 class DetalleVenta(models.Model):

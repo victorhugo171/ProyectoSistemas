@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Factura {{ factura.numero }}{% endblock %}
+
+{% block content %}
+<style>
+    .invoice-card {
+        background: #fff;
+        border-radius: 0;
+        box-shadow: var(--shadow-md);
+        padding: 60px;
+        max-width: 800px;
+        margin: 0 auto;
+        border: 1px solid var(--border-color);
+        position: relative;
+    }
+
+    .invoice-header {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 2px solid #111827;
+        padding-bottom: 30px;
+        margin-bottom: 40px;
+    }
+
+    .brand-inv h2 { font-weight: 900; letter-spacing: -1px; margin: 0; }
+    .brand-inv span { color: var(--primary); font-weight: 800; font-size: 0.8rem; }
+
+    .inv-details { text-align: right; }
+    .inv-details h1 { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin: 0; }
+    .inv-details p { margin: 0; font-weight: 600; color: #6b7280; }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        margin-bottom: 40px;
+    }
+
+    .info-box h6 { text-transform: uppercase; font-size: 0.7rem; color: #9ca3af; font-weight: 800; margin-bottom: 12px; }
+    .info-box p { margin: 2px 0; font-weight: 600; font-size: 0.95rem; }
+
+    .table-inv { width: 100%; margin-bottom: 40px; }
+    .table-inv th { border-bottom: 2px solid #f3f4f6; padding: 12px; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; }
+    .table-inv td { padding: 16px 12px; border-bottom: 1px solid #f3f4f6; font-size: 0.95rem; }
+
+    .inv-total {
+        width: 300px;
+        margin-left: auto;
+    }
+
+    .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
+    .total-final { border-top: 2px solid #111827; padding-top: 16px; margin-top: 8px; font-size: 1.5rem; font-weight: 900; }
+
+    .print-btn {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        background: #111827;
+        color: white;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+        transition: 0.2s;
+    }
+
+    .print-btn:hover { transform: scale(1.1); }
+
+    @media print {
+        .sidebar, .header, .print-btn, .nav-links { display: none !important; }
+        .invoice-card { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; }
+        body { background: white !important; }
+    }
+</style>
+
+<div class="mb-4 d-flex justify-content-between align-items-center no-print">
+    <a href="{% url 'inicio' %}" class="btn btn-outline-dark rounded-pill px-4">
+        <i class="fas fa-home me-2"></i> Volver al Inicio
+    </a>
+    <div class="text-success fw-bold">
+        <i class="fas fa-check-circle me-2"></i> Venta Procesada Correctamente
+    </div>
+</div>
+
+<div class="invoice-card">
+    <div class="invoice-header">
+        <div class="brand-inv">
+            <h2>MOBILESTORE</h2>
+            <span>BY TECNOCODE</span>
+        </div>
+        <div class="inv-details">
+            <h1>FACTURA</h1>
+            <p>Nº {{ factura.numero }}</p>
+            <p>{{ factura.fecha|date:"d/m/Y H:i" }}</p>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-box">
+            <h6>CLIENTE</h6>
+            <p>{{ factura.venta.cliente.nombre }}</p>
+            <p>ID/DOC: {{ factura.venta.cliente.documento }}</p>
+            <p>Tlf: {{ factura.venta.cliente.telefono }}</p>
+        </div>
+        <div class="info-box">
+            <h6>VENDEDOR</h6>
+            <p>{{ factura.venta.usuario.nombre_completo|default:factura.venta.usuario.username }}</p>
+            <p>Tienda Central</p>
+        </div>
+    </div>
+
+    <table class="table-inv">
+        <thead>
+            <tr>
+                <th style="width: 50%;">Descripción</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-end">P. Unitario</th>
+                <th class="text-end">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in factura.venta.detalles.all %}
+            <tr>
+                <td>
+                    <div class="fw-bold">{{ d.producto.nombre }}</div>
+                    <small>{{ d.producto.sku_codigo }}</small>
+                </td>
+                <td class="text-center">{{ d.cantidad }}</td>
+                <td class="text-end">Bs {{ d.precio_unitario }}</td>
+                <td class="text-end fw-bold">Bs {{ d.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="inv-total">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>Bs {{ factura.total }}</span>
+        </div>
+        <div class="total-row">
+            <span>Impuestos (0%):</span>
+            <span>Bs 0.00</span>
+        </div>
+        <div class="total-row total-final">
+            <span>TOTAL:</span>
+            <span>Bs {{ factura.total }}</span>
+        </div>
+        <div class="mt-4 p-2 bg-light text-center rounded">
+            <small class="fw-bold">PAGO RECIBIDO: EFECTIVO</small>
+        </div>
+    </div>
+
+    <div class="mt-5 pt-5 text-center text-muted border-top border-dotted">
+        <p class="small mb-1">¡Gracias por su compra en MOBILESTORE!</p>
+        <p class="small">Este es un documento electrónico válido.</p>
+    </div>
+</div>
+
+<div class="print-btn no-print" onclick="window.print()">
+    <i class="fas fa-print fa-lg"></i>
+</div>
+{% endblock %}

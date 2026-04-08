@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Nuevo Cliente{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-5">
+                    <h3 class="fw-bold mb-4 d-flex align-items-center">
+                        <i class="fas fa-user-plus text-primary me-3"></i>
+                        Registrar Cliente
+                    </h3>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">{{ field.label|upper }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ field.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+
+                        <style>
+                            input, select, textarea {
+                                width: 100%;
+                                padding: 12px 16px;
+                                border-radius: 12px;
+                                border: 1px solid var(--border-color);
+                                font-weight: 500;
+                            }
+                            input:focus {
+                                border-color: var(--primary);
+                                outline: none;
+                                box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+                            }
+                        </style>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary py-3 rounded-pill fw-bold">
+                                GUARDAR Y VOLVER AL CARRITO
+                            </button>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'ver_carrito' %}" class="text-decoration-none text-muted small fw-bold">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

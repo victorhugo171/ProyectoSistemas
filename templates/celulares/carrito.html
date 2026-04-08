@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Mi Carrito de Compras{% endblock %}
+{% block title %}Facturación y Venta{% endblock %}
 
 {% block content %}
 <style>
@@ -9,210 +9,242 @@
         border-radius: 24px;
         border: 1px solid var(--border-color);
         box-shadow: var(--shadow-md);
-        padding: 48px;
+        padding: 40px;
         animation: fadeIn 0.5s ease-out;
     }
 
-    .cart-header {
-        margin-bottom: 40px;
+    .section-title {
+        font-weight: 800;
+        margin-bottom: 24px;
+        color: #111827;
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 12px;
     }
 
-    .cart-header i {
-        font-size: 1.75rem;
-        color: var(--primary);
-    }
-
-    .cart-header h2 {
-        font-weight: 800;
-        margin: 0;
-        letter-spacing: -0.5px;
-        color: #111827;
-    }
+    .section-title i { color: var(--primary); }
 
     .table-cart {
         width: 100%;
         border-collapse: separate;
-        border-spacing: 0 12px;
+        border-spacing: 0 8px;
     }
 
     .table-cart th {
         color: var(--text-muted);
         font-weight: 700;
+        font-size: 0.75rem;
+        padding: 0 16px;
         text-transform: uppercase;
-        font-size: 0.7rem;
-        padding: 0 24px;
-        letter-spacing: 1px;
     }
 
     .table-cart td {
-        background: #fdfdfd;
+        background: #f9fafb;
+        padding: 16px;
         border-top: 1px solid var(--border-color);
         border-bottom: 1px solid var(--border-color);
-        padding: 24px;
-        transition: 0.2s;
     }
 
-    .table-cart tr:hover td {
-        background: #fff;
-        border-color: var(--primary);
-    }
+    .table-cart td:first-child { border-left: 1px solid var(--border-color); border-radius: 12px 0 0 12px; }
+    .table-cart td:last-child { border-right: 1px solid var(--border-color); border-radius: 0 12px 12px 0; }
 
-    .table-cart td:first-child {
-        border-left: 1px solid var(--border-color);
-        border-radius: 16px 0 0 16px;
-    }
-
-    .table-cart td:last-child {
-        border-right: 1px solid var(--border-color);
-        border-radius: 0 16px 16px 0;
-    }
-
-    .product-title {
-        font-weight: 800;
-        color: #111827;
-        font-size: 1.05rem;
-        display: block;
-        margin-bottom: 4px;
-    }
-
-    .product-sku {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-
-    .price-subtotal {
-        font-weight: 800;
-        color: #111827;
-        font-size: 1.1rem;
-    }
-
-    .total-section {
-        margin-top: 48px;
-        padding-top: 32px;
-        border-top: 1px dashed var(--border-color);
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 32px;
-    }
-
-    .total-label {
-        font-size: 1.1rem;
-        color: var(--text-muted);
-        font-weight: 700;
-    }
-
-    .total-amount {
-        font-size: 2.5rem;
+    .total-display {
+        font-size: 2rem;
         font-weight: 900;
-        color: #111827;
-        letter-spacing: -1.5px;
+        color: var(--primary);
     }
 
-    .btn-checkout {
+    .client-selector {
+        background: #f3f4f6;
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 32px;
+    }
+
+    .form-select-lg {
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        font-weight: 600;
+    }
+
+    .btn-finish {
         background: var(--primary);
-        color: #fff;
-        padding: 16px 64px;
+        color: white;
+        padding: 16px 40px;
         border-radius: 14px;
         font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: 0.2s all;
         border: none;
-        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+        width: 100%;
+        transition: 0.2s;
+        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
     }
 
-    .btn-checkout:hover {
+    .btn-finish:hover:not(:disabled) {
         background: var(--primary-hover);
         transform: translateY(-2px);
-        box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
-        color: #fff;
     }
 
-    .empty-cart {
-        text-align: center;
-        padding: 100px 0;
+    .btn-finish:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
-    .empty-cart i {
-        color: var(--border-color);
-        margin-bottom: 24px;
+    .qty-control {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 4px 8px;
+        border: 1px solid var(--border-color);
+        width: fit-content;
+        margin: 0 auto;
     }
 
-    .btn-explore {
-        background: #111827;
-        color: #fff;
-        border-radius: 14px;
-        padding: 14px 48px;
-        font-weight: 800;
+    .btn-qty {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        border: none;
+        background: #f3f4f6;
+        color: #111827;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
         transition: 0.2s;
-        text-decoration: none;
-        display: inline-block;
     }
 
-    .btn-explore:hover {
-        background: #1f2937;
-        transform: translateY(-2px);
+    .btn-qty:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-remove {
+        color: #ef4444;
+        background: #fee2e2;
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        transition: 0.2s;
+    }
+
+    .btn-remove:hover {
+        background: #ef4444;
+        color: white;
+        transform: scale(1.1);
     }
 </style>
 
-<div class="cart-card">
-    {% if items %}
-    <div class="cart-header">
-        <i class="fas fa-shopping-bag"></i>
-        <h2>Resumen de Compra</h2>
-    </div>
+<div class="container">
+    <div class="row g-4">
+        <!-- Detalle de Productos -->
+        <div class="col-lg-8">
+            <div class="cart-card">
+                <h4 class="section-title"><i class="fas fa-shopping-cart"></i> Detalle de la Venta</h4>
+                {% if items %}
+                <table class="table-cart">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th class="text-center">Cant.</th>
+                            <th class="text-end">Subtotal</th>
+                            <th class="text-end" style="width: 50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ item.producto.nombre }}</div>
+                                <small class="text-muted">{{ item.producto.sku_codigo }}</small>
+                            </td>
+                            <td>Bs {{ item.producto.precio }}</td>
+                            <td class="text-center">
+                                <div class="qty-control">
+                                    <a href="{% url 'restar_carrito' item.producto.pk %}" class="btn-qty text-decoration-none">-</a>
+                                    <span class="fw-bold px-1">{{ item.cantidad }}</span>
+                                    <a href="{% url 'agregar_carrito' item.producto.pk %}" class="btn-qty text-decoration-none">+</a>
+                                </div>
+                            </td>
+                            <td class="text-end fw-bold">Bs {{ item.subtotal }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'eliminar_item_carrito' item.producto.pk %}" class="btn-remove text-decoration-none">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{% url 'inicio' %}" class="btn btn-link text-decoration-none fw-bold text-muted">
+                        <i class="fas fa-plus me-2"></i> Agregar más productos
+                    </a>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <p class="text-muted">No hay productos seleccionados.</p>
+                    <a href="{% url 'inicio' %}" class="btn btn-dark rounded-pill px-4">Ir al Catálogo</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
 
-    <table class="table-cart">
-        <thead>
-            <tr>
-                <th style="width: 45%;">Producto</th>
-                <th>Precio</th>
-                <th class="text-center">Cant.</th>
-                <th class="text-end">Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in items %}
-            <tr>
-                <td>
-                    <span class="product-title">{{ item.producto.nombre }}</span>
-                    <span class="product-sku">SKU: {{ item.producto.sku_codigo }}</span>
-                </td>
-                <td class="fw-semibold">Bs {{ item.producto.precio }}</td>
-                <td class="text-center">
-                    <span class="badge bg-white text-dark px-3 py-2 border rounded-pill shadow-sm">{{ item.cantidad }}</span>
-                </td>
-                <td class="text-end price-subtotal">Bs {{ item.subtotal }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <!-- Resumen y Cliente -->
+        <div class="col-lg-4">
+            <div class="cart-card h-100">
+                <h4 class="section-title"><i class="fas fa-user-tag"></i> Finalizar Venta</h4>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-muted small">TOTAL A COBRAR</label>
+                    <div class="total-display">Bs {{ total }}</div>
+                </div>
 
-    <div class="total-section">
-        <span class="total-label">Total a pagar:</span>
-        <span class="total-amount">Bs {{ total }}</span>
-    </div>
+                <form action="{% url 'procesar_venta' %}" method="post" id="ventaForm">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small">CLIENTE</label>
+                        <select name="cliente_id" id="cliente_id" class="form-select form-select-lg" required onchange="toggleButton()">
+                            <option value="">-- Seleccionar Cliente --</option>
+                            {% for c in clientes %}
+                            <option value="{{ c.pk }}">{{ c.nombre }} ({{ c.documento }})</option>
+                            {% endfor %}
+                        </select>
+                        <div class="mt-3">
+                            <a href="{% url 'crear_cliente' %}" class="btn btn-sm btn-outline-primary w-100 rounded-pill">
+                                <i class="fas fa-user-plus me-2"></i> Nuevo Cliente
+                            </a>
+                        </div>
+                    </div>
 
-    <div class="d-flex justify-content-between align-items-center mt-5">
-        <a href="{% url 'inicio' %}" class="text-decoration-none text-muted fw-bold">
-            <i class="fas fa-arrow-left me-2"></i> Continuar comprando
-        </a>
-        <button class="btn-checkout">Pagar Ahora</button>
-    </div>
+                    <div class="p-3 bg-light rounded-3 mb-4">
+                        <div class="d-flex align-items-center text-success fw-bold">
+                            <i class="fas fa-money-bill-wave me-2"></i> Método: Efectivo
+                        </div>
+                        <small class="text-muted">Solo cobros en efectivo para este entregable.</small>
+                    </div>
 
-    {% else %}
-    <div class="empty-cart">
-        <i class="fas fa-shopping-basket fa-5x mb-4"></i>
-        <h3 class="fw-bold mb-2">Tu bolsa está vacía</h3>
-        <p class="text-muted mb-4">Parece que aún no has decidido qué celular llevarte.</p>
-        <a href="{% url 'inicio' %}" class="btn-explore">Explorar Tienda</a>
+                    <button type="submit" class="btn-finish" id="btnFinish" disabled>
+                        COMPLETAR VENTA Y FACTURAR
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
-    {% endif %}
 </div>
+
+<script>
+    function toggleButton() {
+        const select = document.getElementById('cliente_id');
+        const btn = document.getElementById('btnFinish');
+        btn.disabled = select.value === "";
+    }
+</script>
 {% endblock %}

@@ -12,6 +12,24 @@
         align-items: center;
     }
 
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        .page-title h2 {
+            font-size: 1.5rem;
+        }
+        .btn-create {
+            width: 100%;
+            justify-content: center;
+        }
+        .table thead th, .table tbody td {
+            padding: 12px 15px;
+        }
+    }
+
     .page-title h2 {
         font-size: 1.75rem;
         font-weight: 800;
@@ -159,12 +177,12 @@
     }
 </style>
 
-<div class="page-header">
+<div class="page-header-responsive">
     <div class="page-title">
         <h2>Gestión de Usuarios</h2>
         <p>Administra los accesos y roles del sistema</p>
     </div>
-    <a href="{% url 'registrar' %}" class="btn-create">
+    <a href="{% url 'registrar' %}" class="btn-create btn-responsive">
         <i class="fas fa-plus"></i> Nuevo Usuario
     </a>
 </div>

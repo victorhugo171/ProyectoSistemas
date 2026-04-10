@@ -3,22 +3,24 @@
 {% block title %}Inventario de Existencias{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-5 align-items-center">
-        <div class="col-md-6">
+<div class="row g-0">
+    <div class="col-12">
+        <div class="p-2 p-md-3">
+    <div class="page-header-responsive">
+        <div>
             <h2 class="fw-bold mb-1" style="letter-spacing: -1px;">Control de Inventario</h2>
-            <p class="text-muted small fw-600 mb-0">MONITOREO DE EXISTENCIAS Y VALORIZACIÓN DE STOCK</p>
+            <p class="text-muted small fw-600 mb-0">MONITOREO DE EXISTENCIAS Y VENTAS</p>
         </div>
-        <div class="col-md-6 text-end">
-            <a href="{% url 'crear_celular' %}" class="btn btn-primary rounded-pill px-4 fw-bold">
-                <i class="fas fa-plus me-2"></i> Nuevo Producto
+        <div class="text-md-end">
+            <a href="{% url 'crear_celular' %}" class="btn btn-primary rounded-pill px-4 fw-bold btn-responsive">
+                <i class="fas fa-plus"></i> Nuevo Producto
             </a>
         </div>
     </div>
 
     <!-- KPIs de Inventario -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-3">
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-md-4">
             <div class="card border-0 shadow-sm rounded-4 p-4">
                 <div class="d-flex align-items-center">
                     <div class="stats-icon bg-light-primary text-primary me-3">
@@ -31,7 +33,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4">
             <div class="card border-0 shadow-sm rounded-4 p-4">
                 <div class="d-flex align-items-center">
                     <div class="stats-icon bg-light-danger text-danger me-3">
@@ -44,7 +46,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4">
             <div class="card border-0 shadow-sm rounded-4 p-4">
                 <div class="d-flex align-items-center">
                     <div class="stats-icon bg-light-success text-success me-3">
@@ -116,6 +118,8 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
         </div>
     </div>
 </div>

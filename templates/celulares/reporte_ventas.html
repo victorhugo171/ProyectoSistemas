@@ -3,34 +3,36 @@
 {% block title %}Panel de Ventas - Administrador{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-5 align-items-center">
-        <div class="col-md-6">
+<div class="row g-0">
+    <div class="col-12">
+        <div class="p-2 p-md-3">
+    <div class="page-header-responsive">
+        <div>
             <h2 class="fw-bold mb-1" style="letter-spacing: -1px;">Panel de Ventas</h2>
-            <p class="text-muted small fw-600 mb-0">HISTORIAL COMPLETO DE TRANSACCIONES Y FACTURACIÓN</p>
+            <p class="text-muted small fw-600 mb-0">HISTORIAL DE TRANSACCIONES</p>
         </div>
-        <div class="col-md-6 text-end">
-            <button class="btn btn-outline-dark rounded-pill px-4 btn-sm fw-bold">
-                <i class="fas fa-download me-2"></i> Exportar Datos
+        <div class="text-md-end">
+            <button class="btn btn-outline-dark rounded-pill px-4 btn-sm fw-bold btn-responsive">
+                <i class="fas fa-download"></i> Exportar Datos
             </button>
         </div>
     </div>
 
     <!-- Resumen de Estadísticas (Mini Cards) -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-3">
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-md-4 col-xl-3">
             <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
                 <span class="text-muted small fw-bold text-uppercase">Total Ventas</span>
                 <h3 class="fw-900 mt-2 mb-0">{{ ventas.count }}</h3>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4 col-xl-3">
             <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
                 <span class="text-muted small fw-bold text-uppercase">Monto Este Mes</span>
                 <h3 class="fw-900 mt-2 mb-0 text-primary">Bs {{ total_mes }}</h3>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4 col-xl-3">
             <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
                 <span class="text-muted small fw-bold text-uppercase">Monto Histórico</span>
                 <h3 class="fw-900 mt-2 mb-0">Bs {{ total_general }}</h3>
@@ -39,7 +41,7 @@
     </div>
 
     <!-- Tabla de Ventas -->
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
@@ -119,6 +121,8 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
         </div>
     </div>
 </div>

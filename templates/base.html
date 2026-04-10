@@ -281,19 +281,21 @@
                         <i class="fas fa-users-cog"></i> Gestión de Usuarios
                     </a>
                 </li>
-                <li>
-                    <a href="#">
+                <li class="{% if request.resolver_match.url_name == 'reporte_ventas' %}active{% endif %}">
+                    <a href="{% url 'reporte_ventas' %}">
                         <i class="fas fa-cash-register"></i> Panel de Ventas
                     </a>
                 </li>
-                <li>
-                    <a href="#">
+                <li class="{% if request.resolver_match.url_name == 'lista_inventario' %}active{% endif %}">
+                    <a href="{% url 'lista_inventario' %}">
                         <i class="fas fa-boxes"></i> Inventario
-                        <span class="badge-grey">124</span>
+                        {% if bajo_stock > 0 %}
+                        <span class="badge-count bg-danger">{{ bajo_stock }}</span>
+                        {% endif %}
                     </a>
                 </li>
-                <li>
-                    <a href="#">
+                <li class="{% if request.resolver_match.url_name == 'dashboard_reportes' %}active{% endif %}">
+                    <a href="{% url 'dashboard_reportes' %}">
                         <i class="fas fa-chart-line"></i> Reportes
                     </a>
                 </li>
@@ -308,11 +310,6 @@
                     </a>
                 </li>
 
-                <li>
-                    <a href="#">
-                        <i class="fas fa-cog"></i> Configuración
-                    </a>
-                </li>
 
                 {% if user.is_authenticated %}
                 <li style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.05);">

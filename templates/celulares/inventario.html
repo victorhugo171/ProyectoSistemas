@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventario de Existencias{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-6">
+            <h2 class="fw-bold mb-1" style="letter-spacing: -1px;">Control de Inventario</h2>
+            <p class="text-muted small fw-600 mb-0">MONITOREO DE EXISTENCIAS Y VALORIZACIÓN DE STOCK</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{% url 'crear_celular' %}" class="btn btn-primary rounded-pill px-4 fw-bold">
+                <i class="fas fa-plus me-2"></i> Nuevo Producto
+            </a>
+        </div>
+    </div>
+
+    <!-- KPIs de Inventario -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-light-primary text-primary me-3">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small fw-bold text-uppercase">Total Items</span>
+                        <h3 class="fw-900 mb-0">{{ productos.count }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-light-danger text-danger me-3">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small fw-bold text-uppercase">Bajo Stock</span>
+                        <h3 class="fw-900 mb-0">{{ bajo_stock }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-light-success text-success me-3">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small fw-bold text-uppercase">Valor Total</span>
+                        <h4 class="fw-900 mb-0">Bs {{ valor_total|floatformat:2 }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y Tabla -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4 py-3 text-muted small fw-bold text-uppercase">Producto</th>
+                        <th class="py-3 text-muted small fw-bold text-uppercase">SKU / Modelo</th>
+                        <th class="py-3 text-muted small fw-bold text-uppercase">Precio Unitario</th>
+                        <th class="py-3 text-muted small fw-bold text-uppercase text-center">Stock Actual</th>
+                        <th class="py-3 text-muted small fw-bold text-uppercase">Estado</th>
+                        <th class="pe-4 py-3 text-muted small fw-bold text-uppercase text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in productos %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                {% if p.imagen %}
+                                <img src="{{ p.imagen.url }}" class="rounded-3 me-3" style="width: 45px; height: 45px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-light rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                    <i class="fas fa-mobile-alt text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="fw-bold">{{ p.nombre }}</div>
+                                    <small class="text-muted">{{ p.tipo }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td><code class="fw-600 text-dark">{{ p.sku_codigo }}</code></td>
+                        <td class="fw-600">Bs {{ p.precio }}</td>
+                        <td class="text-center">
+                            <span class="stock-number {% if p.stock < 5 %}text-danger fw-900{% else %}fw-700{% endif %}">
+                                {{ p.stock }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if p.stock == 0 %}
+                            <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle px-3">Agotado</span>
+                            {% elif p.stock < 5 %}
+                            <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle px-3">Bajo Stock</span>
+                            {% else %}
+                            <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3">Disponible</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 text-end">
+                            <a href="{% url 'editar_celular' p.pk %}" class="btn btn-sm btn-light rounded-pill px-3 me-1">
+                                <i class="fas fa-edit me-1"></i> Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fw-600 { font-weight: 600; }
+    .fw-700 { font-weight: 700; }
+    .fw-900 { font-weight: 900; }
+    
+    .bg-light-primary { background: #eef2ff; }
+    .bg-light-danger { background: #fff1f2; }
+    .bg-light-success { background: #f0fdf4; }
+    
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .stock-number {
+        font-size: 1.1rem;
+        display: inline-block;
+        min-width: 30px;
+    }
+
+    .badge {
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .bg-danger-subtle { background-color: #fee2e2 !important; }
+    .bg-warning-subtle { background-color: #fef3c7 !important; }
+    .bg-success-subtle { background-color: #dcfce7 !important; }
+</style>
+{% endblock %}

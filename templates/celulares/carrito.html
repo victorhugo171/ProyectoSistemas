@@ -210,18 +210,43 @@
                 <form action="{% url 'procesar_venta' %}" method="post" id="ventaForm">
                     {% csrf_token %}
                     <div class="mb-4">
-                        <label class="form-label fw-bold small">CLIENTE</label>
-                        <select name="cliente_id" id="cliente_id" class="form-select form-select-lg" required onchange="toggleButton()">
-                            <option value="">-- Seleccionar Cliente --</option>
-                            {% for c in clientes %}
-                            <option value="{{ c.pk }}">{{ c.nombre }} ({{ c.documento }})</option>
-                            {% endfor %}
-                        </select>
-                        <div class="mt-3">
-                            <a href="{% url 'crear_cliente' %}" class="btn btn-sm btn-outline-primary w-100 rounded-pill">
-                                <i class="fas fa-user-plus me-2"></i> Nuevo Cliente
-                            </a>
+                        <label class="form-label fw-bold small">BUSCAR CLIENTE POR CARNET</label>
+                        <div class="input-group">
+                            <input type="text" id="doc_search" class="form-control form-control-lg border-end-0" placeholder="Nº de Carnet..." style="border-radius: 12px 0 0 12px;">
+                            <button class="btn btn-primary px-3" type="button" onclick="searchClient()" style="border-radius: 0 12px 12px 0;">
+                                <i class="fas fa-search"></i>
+                            </button>
                         </div>
+
+                        <!-- Resultado Encontrado -->
+                        <div id="client_result" class="mt-3 animate__animated animate__fadeIn" style="display: none;">
+                            <div class="card bg-success bg-opacity-10 border-success border-opacity-25 rounded-3 p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="text-success small fw-bold" style="font-size: 0.65rem;">CLIENTE SELECCIONADO</div>
+                                        <div id="client_name" class="fw-bold h6 mb-0 text-dark"></div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="resetClient()">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- No Encontrado -->
+                        <div id="client_not_found" class="mt-3 animate__animated animate__fadeIn" style="display: none;">
+                            <div class="alert alert-warning border-0 rounded-3 mb-0">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span class="small fw-bold">Cliente no registrado</span>
+                                </div>
+                                <a href="{% url 'crear_cliente' %}" class="btn btn-sm btn-warning w-100 rounded-pill fw-bold text-dark">
+                                    <i class="fas fa-user-plus me-1"></i> REGISTRAR NUEVO CLIENTE
+                                </a>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="cliente_id" id="cliente_id" value="">
                     </div>
 
                     <div class="p-3 bg-light rounded-3 mb-4">
@@ -241,10 +266,65 @@
 </div>
 
 <script>
-    function toggleButton() {
-        const select = document.getElementById('cliente_id');
-        const btn = document.getElementById('btnFinish');
-        btn.disabled = select.value === "";
+    function searchClient() {
+        const input = document.getElementById('doc_search');
+        const doc = input.value.trim();
+        if (!doc) return;
+
+        const btn = document.querySelector('button[onclick="searchClient()"]');
+        const originalIcon = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        fetch(`/buscar-cliente/?doc=${doc}`)
+            .then(response => response.json())
+            .then(data => {
+                btn.innerHTML = originalIcon;
+                const resultDiv = document.getElementById('client_result');
+                const notFoundDiv = document.getElementById('client_not_found');
+                const nameSpan = document.getElementById('client_name');
+                const idInput = document.getElementById('cliente_id');
+                const btnFinish = document.getElementById('btnFinish');
+
+                if (data.success) {
+                    nameSpan.innerText = data.nombre;
+                    idInput.value = data.id;
+                    resultDiv.style.display = 'block';
+                    notFoundDiv.style.display = 'none';
+                    btnFinish.disabled = false;
+                    input.classList.add('is-valid');
+                    input.classList.remove('is-invalid');
+                } else {
+                    resultDiv.style.display = 'none';
+                    notFoundDiv.style.display = 'block';
+                    idInput.value = "";
+                    btnFinish.disabled = true;
+                    input.classList.add('is-invalid');
+                    input.classList.remove('is-valid');
+                }
+            })
+            .catch(err => {
+                btn.innerHTML = originalIcon;
+                console.error('Error:', err);
+            });
     }
+
+    function resetClient() {
+        document.getElementById('client_result').style.display = 'none';
+        document.getElementById('client_not_found').style.display = 'none';
+        const input = document.getElementById('doc_search');
+        input.value = "";
+        input.classList.remove('is-valid', 'is-invalid');
+        document.getElementById('cliente_id').value = "";
+        document.getElementById('btnFinish').disabled = true;
+    }
+
+    // Permitir buscar al presionar Enter
+    document.getElementById('doc_search').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchClient();
+        }
+    });
+
 </script>
 {% endblock %}

@@ -175,7 +175,7 @@
     <div class="detail-header">
         <div>
             <h2>{{ celular.nombre }}</h2>
-            <p class="text-muted mb-0">SKU: {{ celular.sku_codigo }} | Tipo: {{ celular.tipo }}</p>
+            <p class="text-muted mb-0">SKU: {{ celular.sku_codigo }} | Categoría: {{ celular.categoria.nombre_categoria|default:"Sin Categoría" }}</p>
         </div>
         <div class="tag {% if celular.stock > 0 %}active{% endif %}">
             {% if celular.stock > 0 %} En Stock {% else %} Sin Stock {% endif %}

@@ -6,8 +6,20 @@
 <style>
     .product-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 32px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+    }
+
+    @media (max-width: 1200px) {
+        .product-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .product-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     .product-card {
@@ -182,7 +194,7 @@
             <h3>{{ c.nombre }}</h3>
             <div class="product-sku">{{ c.sku_codigo }}</div>
             
-            <div class="product-meta">Tipo: <span class="text-muted">{{ c.tipo }}</span></div>
+            <div class="product-meta">Categoría: <span class="text-muted">{{ c.categoria.nombre_categoria|default:"Sin Categoría" }}</span></div>
             <div class="color-dots">
                 <div class="dot" style="background-color: #34495e;"></div>
                 <div class="dot" style="background-color: #7f8c8d;"></div>

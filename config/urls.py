@@ -7,13 +7,15 @@ from Login.views import (
     CelularListView, CelularCreateView, CelularUpdateView, CelularDeleteView,
     CelularDetailView, agregar_al_carrito, ver_carrito,
     procesar_venta, detalle_factura, ClienteCreateView,
-    restar_del_carrito, eliminar_item_carrito
+    restar_del_carrito, eliminar_item_carrito, ReporteVentasView,
+    InventarioListView, ReporteDashView, buscar_cliente
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     
+    path('buscar-cliente/', buscar_cliente, name='buscar_cliente'),
 
     path('registrar/', RegistroUsuario.as_view(), name='registrar'),
     path('home/', UsuarioABMView.as_view(), name='home'),
@@ -36,6 +38,9 @@ urlpatterns = [
     path('carrito/procesar/', procesar_venta, name='procesar_venta'),
     path('factura/<int:pk>/', detalle_factura, name='detalle_factura'),
     path('cliente/nuevo/', ClienteCreateView.as_view(), name='crear_cliente'),
+    path('ventas/reporte/', ReporteVentasView.as_view(), name='reporte_ventas'),
+    path('inventario/', InventarioListView.as_view(), name='lista_inventario'),
+    path('reportes/', ReporteDashView.as_view(), name='dashboard_reportes'),
 ]
 
 if settings.DEBUG:

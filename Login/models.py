@@ -9,7 +9,7 @@ class Usuario(AbstractUser):
     ROL_CHOICES = [
         ('Administrador', 'Administrador'),
         ('Vendedor', 'Vendedor'),
-        ('Almacenero', 'Almacenero'),
+        ('Usuario', 'Usuario'),
     ]
     ESTADO_CHOICES = [
         ('Activo', 'Activo'),
@@ -17,7 +17,7 @@ class Usuario(AbstractUser):
     ]
     
     nombre_completo = models.CharField(max_length=100) # Django's first_name/last_name can also be used
-    rol = models.CharField(max_length=20, choices=ROL_CHOICES, default='Vendedor')
+    rol = models.CharField(max_length=20, choices=ROL_CHOICES, default='Usuario')
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='Activo')
 
     class Meta:

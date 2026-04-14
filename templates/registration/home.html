@@ -194,6 +194,7 @@
                 <thead>
                     <tr>
                         <th>Usuario</th>
+                        <th>Rol</th>
                         <th>Estado</th>
                         <th class="text-end">Acciones</th>
                     </tr>
@@ -205,15 +206,20 @@
                             <div class="username-cell">
                                 <div class="user-avatar">{{ u.username.0|upper }}</div>
                                 <div>
-                                    <span class="fw-bold">{{ u.username }}</span>
-                                    {% if u.is_superuser %}
+                                    <span class="fw-bold">{{ u.nombre_completo|default:u.username }}</span>
+                                    {% if u.is_superuser or u.rol == 'Administrador' %}
                                     <span class="badge-admin">Admin</span>
                                     {% endif %}
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="badge rounded-pill bg-success-subtle text-success px-3" style="font-size: 0.75rem;">Activo</span>
+                            <span class="badge rounded-pill {% if u.rol == 'Administrador' %}bg-danger-subtle text-danger{% elif u.rol == 'Vendedor' %}bg-primary-subtle text-primary{% else %}bg-info-subtle text-info{% endif %} px-3" style="font-size: 0.75rem;">
+                                {{ u.rol|default:"Vendedor" }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill bg-success-subtle text-success px-3" style="font-size: 0.75rem;">{{ u.estado }}</span>
                         </td>
                         <td>
                             <div class="actions-cell">

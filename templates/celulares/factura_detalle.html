@@ -1,168 +1,381 @@
 {% extends 'base.html' %}
 
-{% block title %}Factura {{ factura.numero }}{% endblock %}
+{% block title %}Factura {{ factura.numero_factura }}{% endblock %}
 
 {% block content %}
 <style>
-    .invoice-card {
-        background: #fff;
-        border-radius: 0;
-        box-shadow: var(--shadow-md);
-        padding: 60px;
-        max-width: 800px;
+    /* MOBILESTORE Invoice Theme */
+    :root {
+        --inv-primary: #6366f1; /* Indigo from base.html */
+        --inv-primary-dark: #4f46e5;
+        --inv-bg-light: #f8fafc;
+        --inv-text: #1e293b;
+        --inv-border: #e2e8f0;
+        --inv-label-bg: #f1f5f9;
+        --inv-accent: #10b981;
+    }
+
+    .siat-container {
+        max-width: 1000px;
         margin: 0 auto;
-        border: 1px solid var(--border-color);
-        position: relative;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+        color: var(--inv-text);
+        border: 1px solid var(--inv-border);
     }
 
-    .invoice-header {
-        display: flex;
-        justify-content: space-between;
-        border-bottom: 2px solid #111827;
-        padding-bottom: 30px;
-        margin-bottom: 40px;
+    /* Verification Title */
+    .verification-header {
+        text-align: center;
+        padding: 40px 20px;
+        background: var(--inv-bg-light);
+        border-bottom: 1px solid var(--inv-border);
     }
 
-    .brand-inv h2 { font-weight: 900; letter-spacing: -1px; margin: 0; }
-    .brand-inv span { color: var(--primary); font-weight: 800; font-size: 0.8rem; }
+    .verification-header h2 {
+        font-weight: 900;
+        color: var(--inv-primary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 1.6rem;
+        margin: 0;
+    }
 
-    .inv-details { text-align: right; }
-    .inv-details h1 { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin: 0; }
-    .inv-details p { margin: 0; font-weight: 600; color: #6b7280; }
+    /* Section Styling */
+    .siat-section {
+        padding: 30px 45px;
+        border-bottom: 1px solid var(--inv-border);
+    }
 
-    .info-grid {
+    .section-label {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #64748b;
+        margin-bottom: 25px;
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-left: 4px solid var(--inv-primary);
+        padding-left: 12px;
+    }
+
+    /* Grid Layout */
+    .info-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 40px;
-        margin-bottom: 40px;
+        gap: 35px;
     }
 
-    .info-box h6 { text-transform: uppercase; font-size: 0.7rem; color: #9ca3af; font-weight: 800; margin-bottom: 12px; }
-    .info-box p { margin: 2px 0; font-weight: 600; font-size: 0.95rem; }
-
-    .table-inv { width: 100%; margin-bottom: 40px; }
-    .table-inv th { border-bottom: 2px solid #f3f4f6; padding: 12px; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; }
-    .table-inv td { padding: 16px 12px; border-bottom: 1px solid #f3f4f6; font-size: 0.95rem; }
-
-    .inv-total {
-        width: 300px;
-        margin-left: auto;
+    .card-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 18px;
+        margin-bottom: 20px;
     }
 
-    .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
-    .total-final { border-top: 2px solid #111827; padding-top: 16px; margin-top: 8px; font-size: 1.5rem; font-weight: 900; }
-
-    .print-btn {
-        position: fixed;
-        bottom: 40px;
-        right: 40px;
-        background: #111827;
-        color: white;
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
+    .icon-box {
+        background: white;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
-        transition: 0.2s;
+        color: var(--inv-primary);
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--inv-border);
     }
 
-    .print-btn:hover { transform: scale(1.1); }
+    .data-box label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #94a3b8;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }
+
+    .data-box span {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--inv-text);
+        line-height: 1.4;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #f0fdf4;
+        color: #166534;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 0.75rem;
+        border: 1px solid #bcf0da;
+        text-transform: uppercase;
+    }
+
+    /* Table Styling */
+    .siat-table-container {
+        padding: 30px 45px;
+    }
+
+    .siat-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .siat-table th {
+        background: var(--inv-bg-light);
+        padding: 15px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: #64748b;
+        text-align: center;
+        text-transform: uppercase;
+        border-bottom: 2px solid var(--inv-border);
+    }
+
+    .siat-table td {
+        padding: 20px 15px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.95rem;
+        vertical-align: middle;
+    }
+
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+
+    /* Footer Buttons */
+    .siat-actions {
+        padding: 35px;
+        text-align: center;
+        background: white;
+        border-top: 1px solid var(--inv-border);
+    }
+
+    .btn-siat-action {
+        background: var(--inv-primary);
+        color: white;
+        border: none;
+        padding: 16px 35px;
+        border-radius: 50px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-siat-action:hover {
+        background: var(--inv-primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
+        color: white;
+    }
 
     @media print {
-        .sidebar, .header, .print-btn, .nav-links { display: none !important; }
-        .invoice-card { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; }
+        .no-print { display: none !important; }
+        .siat-container { box-shadow: none !important; border: 1px solid #eee; margin: 0; width: 100%; max-width: 100%; border-radius: 0; }
         body { background: white !important; }
+        .main-content { padding: 0 !important; }
+        .siat-section { padding: 25px !important; }
+        .siat-table-container { padding: 25px !important; }
+        .verification-header { background: white !important; border-bottom: 2px solid #333; }
+        .section-label { border-left: 4px solid #333 !important; }
+        .siat-table th { background: #f8fafc !important; }
+    }
+
+    @media (max-width: 768px) {
+        .info-row { grid-template-columns: 1fr; gap: 20px; }
+        .siat-section { padding: 25px; }
+        .siat-table-container { padding: 25px; }
     }
 </style>
 
+<!-- Header buttons -->
 <div class="mb-4 d-flex justify-content-between align-items-center no-print">
-    <a href="{% url 'inicio' %}" class="btn btn-outline-dark rounded-pill px-4">
-        <i class="fas fa-home me-2"></i> Volver al Inicio
+    <a href="{% url 'inicio' %}" class="btn btn-outline-dark rounded-pill px-4 shadow-sm">
+        <i class="fas fa-chevron-left me-2"></i> Volver al Inicio
     </a>
-    <div class="text-success fw-bold">
-        <i class="fas fa-check-circle me-2"></i> Venta Procesada Correctamente
+</div>
+
+<div class="siat-container">
+    <!-- Removed SIAT top bar -->
+
+    <!-- Main Title -->
+    <div class="verification-header">
+        <h2>Detalle de Factura Electrónica</h2>
+    </div>
+
+    <!-- Factura Info -->
+    <div class="siat-section">
+        <span class="section-label">Detalle del Documento</span>
+        <div class="info-row">
+            <div>
+                <div class="card-info">
+                    <div class="icon-box"><i class="fas fa-file-invoice"></i></div>
+                    <div class="data-box">
+                        <label>Número de Factura:</label>
+                        <span>{{ factura.numero_factura }}</span>
+                    </div>
+                </div>
+                <div class="card-info">
+                    <div class="icon-box"><i class="fas fa-calendar-check"></i></div>
+                    <div class="data-box">
+                        <label>Fecha y Hora Emisión:</label>
+                        <span>{{ factura.fecha_emision|date:"d/m/Y H:i:s" }}</span>
+                    </div>
+                </div>
+                <div class="card-info">
+                    <div class="icon-box"><i class="fas fa-shield-alt"></i></div>
+                    <div class="data-box">
+                        <label>Estado de Transacción:</label>
+                        <span class="status-badge">Documento Válido</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="card-info">
+                    <div class="icon-box"><i class="fas fa-wallet"></i></div>
+                    <div class="data-box">
+                        <label>Importe Total:</label>
+                        <span class="fw-bold" style="font-size: 1.5rem; color: var(--inv-primary);">{{ factura.total }} Bs.</span>
+                    </div>
+                </div>
+                <div class="card-info">
+                    <div class="icon-box"><i class="fas fa-credit-card"></i></div>
+                    <div class="data-box">
+                        <label>Método de Pago:</label>
+                        <span>{{ factura.venta.pago.metodo|default:"Efectivo" }}</span>
+                    </div>
+                </div>
+                <div class="card-info">
+                    <div class="icon-box"><i class="fas fa-user-circle"></i></div>
+                    <div class="data-box">
+                        <label>Vendedor:</label>
+                        <span>
+                            {% if factura.venta.usuario.rol == 'Usuario' %}
+                                Sistema
+                            {% else %}
+                                {{ factura.venta.usuario.nombre_completo|default:factura.venta.usuario.username }}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emisor Info -->
+    <div class="siat-section">
+        <span class="section-label">Datos del Emisor</span>
+        <div class="info-row">
+            <div>
+                <div class="card-info">
+                    <div class="icon-box"><i class="fas fa-building"></i></div>
+                    <div class="data-box">
+                        <label>Razón Social:</label>
+                        <span>MOBILESTORE - TECNOCODE S.R.L.</span>
+                    </div>
+                </div>
+                <div class="card-info">
+                    <div class="icon-box"><i class="fas fa-fingerprint"></i></div>
+                    <div class="data-box">
+                        <label>NIT:</label>
+                        <span>1234567</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="card-info">
+                    <div class="icon-box"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="data-box">
+                        <label>Ubicación Sucursal:</label>
+                        <span>Av. Roque Aguilera, esquina Radial 13, 3er Anillo Interno, Santa Cruz</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cliente Info -->
+    <div class="siat-section">
+        <span class="section-label">Información del Cliente</span>
+        <div class="info-row">
+            <div class="card-info">
+                <div class="icon-box"><i class="fas fa-user-tag"></i></div>
+                <div class="data-box">
+                    <label>Nombre / Razón Social:</label>
+                    <span class="text-uppercase">{{ factura.razon_social|default:factura.venta.cliente.nombre }}</span>
+                </div>
+            </div>
+            <div class="card-info">
+                <div class="icon-box"><i class="fas fa-address-card"></i></div>
+                <div class="data-box">
+                    <label>NIT/CI/Documento:</label>
+                    <span>{{ factura.nit|default:factura.venta.cliente.documento }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Details -->
+    <div class="siat-table-container">
+        <span class="section-label">Detalle de la Operación</span>
+        <div class="table-responsive">
+            <table class="siat-table">
+                <thead>
+                    <tr>
+                        <th>Código SKU</th>
+                        <th class="text-start">Descripción del Producto</th>
+                        <th>Cant.</th>
+                        <th class="text-end">P. Unitario</th>
+                        <th class="text-end">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in factura.venta.detalles.all %}
+                    <tr>
+                        <td class="text-center text-muted small">{{ d.producto.sku_codigo }}</td>
+                        <td class="fw-bold">{{ d.producto.nombre }}</td>
+                        <td class="text-center">{{ d.cantidad }}</td>
+                        <td class="text-end">{{ d.precio_unitario }} Bs.</td>
+                        <td class="text-end fw-bold">{{ d.subtotal }} Bs.</td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="4" class="text-end pt-5 fw-bold" style="border: none;">TOTAL FINAL A PAGAR</td>
+                        <td class="text-end pt-5 fw-bold" style="border: none; font-size: 1.5rem; color: var(--inv-primary);">{{ factura.total }} Bs.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="siat-actions no-print">
+        <a href="#" onclick="window.print()" class="btn-siat-action">
+            <i class="fas fa-print"></i> Imprimir Comprobante
+            <i class="fas fa-check-circle ms-2 small"></i>
+        </a>
     </div>
 </div>
 
-<div class="invoice-card">
-    <div class="invoice-header">
-        <div class="brand-inv">
-            <h2>MOBILESTORE</h2>
-            <span>BY TECNOCODE</span>
-        </div>
-        <div class="inv-details">
-            <h1>FACTURA</h1>
-            <p>Nº {{ factura.numero_factura }}</p>
-            <p>{{ factura.fecha_emision|date:"d/m/Y H:i" }}</p>
-        </div>
+<!-- Legal Footer -->
+<div class="text-center mt-5 mb-5 px-4 text-muted small no-print">
+    <div class="mb-2">
+        <i class="fas fa-info-circle me-1"></i> 
+        "ESTA FACTURA CONTRIBUYE AL DESARROLLO DEL PAÍS, EL USO ILÍCITO DE ÉSTA SERÁ SANCIONADO DE ACUERDO A LA LEY"
     </div>
-
-    <div class="info-grid">
-        <div class="info-box">
-            <h6>CLIENTE</h6>
-            <p>{{ factura.venta.cliente.nombre }}</p>
-            <p>ID/DOC: {{ factura.venta.cliente.documento }}</p>
-            <p>Tlf: {{ factura.venta.cliente.telefono }}</p>
-        </div>
-        <div class="info-box">
-            <h6>VENDEDOR</h6>
-            <p>{{ factura.venta.usuario.nombre_completo|default:factura.venta.usuario.username }}</p>
-            <p>Tienda Central</p>
-        </div>
-    </div>
-
-    <table class="table-inv">
-        <thead>
-            <tr>
-                <th style="width: 50%;">Descripción</th>
-                <th class="text-center">Cant.</th>
-                <th class="text-end">P. Unitario</th>
-                <th class="text-end">Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for d in factura.venta.detalles.all %}
-            <tr>
-                <td>
-                    <div class="fw-bold">{{ d.producto.nombre }}</div>
-                    <small>{{ d.producto.sku_codigo }}</small>
-                </td>
-                <td class="text-center">{{ d.cantidad }}</td>
-                <td class="text-end">Bs {{ d.precio_unitario }}</td>
-                <td class="text-end fw-bold">Bs {{ d.subtotal }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div class="inv-total">
-        <div class="total-row">
-            <span>Subtotal:</span>
-            <span>Bs {{ factura.total }}</span>
-        </div>
-        <div class="total-row">
-            <span>Impuestos (0%):</span>
-            <span>Bs 0.00</span>
-        </div>
-        <div class="total-row total-final">
-            <span>TOTAL:</span>
-            <span>Bs {{ factura.total }}</span>
-        </div>
-        <div class="mt-4 p-2 bg-light text-center rounded">
-            <small class="fw-bold">PAGO RECIBIDO: EFECTIVO</small>
-        </div>
-    </div>
-
-    <div class="mt-5 pt-5 text-center text-muted border-top border-dotted">
-        <p class="small mb-1">¡Gracias por su compra en MOBILESTORE!</p>
-        <p class="small">Este es un documento electrónico válido.</p>
-    </div>
-</div>
-
-<div class="print-btn no-print" onclick="window.print()">
-    <i class="fas fa-print fa-lg"></i>
+    <div>Ley N° 453: El proveedor deberá suministrar el servicio en las condiciones acordadas o informadas.</div>
 </div>
 {% endblock %}

@@ -16,7 +16,13 @@ User = get_user_model()
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("username",)
+        fields = ("username", "nombre_completo")
+
+# Formulario para uso administrativo (permite elegir rol)
+class AdminUserCreationForm(UserCreationForm):
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ("username", "nombre_completo", "rol")
 
 
 class UsuarioABMView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -35,12 +41,12 @@ class RegistroUsuario(CreateView):
 
 class UsuarioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = User
-    fields = ['username', 'email', 'first_name', 'last_name']
+    fields = ['username', 'nombre_completo', 'rol', 'email']
     template_name = 'registration/registro.html'
     success_url = reverse_lazy('home')
 
     def test_func(self):
-        return self.request.user.is_superuser
+        return self.request.user.is_superuser or self.request.user.rol == 'Administrador'
 
 class UsuarioDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = User
@@ -140,10 +146,27 @@ def ver_carrito(request):
 def procesar_venta(request):
     if request.method == 'POST':
         cliente_id = request.POST.get('cliente_id')
-        if not cliente_id:
-            return redirect('ver_carrito')
+        
+        # Si el usuario es rol 'Usuario', buscamos o creamos un cliente específico para guardarlo
+        if not cliente_id and request.user.rol == 'Usuario':
+            nit = request.POST.get('nit', '0')
+            razon_social = request.POST.get('razon_social', 'CONSUMIDOR FINAL')
             
-        cliente = get_object_or_404(Cliente, pk=cliente_id)
+            # Buscamos por documento (NIT)
+            cliente = Cliente.objects.filter(documento=nit).first()
+            
+            if not cliente:
+                # Si no existe, lo creamos para que quede registrado en la base de datos
+                cliente = Cliente.objects.create(
+                    documento=nit,
+                    nombre=razon_social,
+                    telefono=nit, # Usamos el NIT como teléfono para cumplir con el campo único
+                    estado='Activo'
+                )
+        elif not cliente_id:
+            return redirect('ver_carrito')
+        else:
+            cliente = get_object_or_404(Cliente, pk=cliente_id)
         carrito, _ = Carrito.objects.get_or_create(usuario=request.user, estado='Activo')
         items = carrito.detalles.all()
         
@@ -169,7 +192,15 @@ def procesar_venta(request):
             )
             item.producto.reducir_stock(item.cantidad, request.user, venta=venta)
             
-        factura = venta.finalizar_venta(metodo_pago='Efectivo')
+        metodo_pago = request.POST.get('metodo_pago', 'Efectivo')
+        nit = request.POST.get('nit') or cliente.documento or ''
+        razon_social = request.POST.get('razon_social') or f"{cliente.nombre} {cliente.apellido or ''}".strip()
+        
+        factura = venta.finalizar_venta(
+            metodo_pago=metodo_pago,
+            nit=nit,
+            razon_social=razon_social
+        )
         # Marcar carrito como procesado
         carrito.estado = 'Procesado'
         carrito.save()
@@ -247,7 +278,7 @@ class ReporteDashView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'celulares/reportes.html'
 
     def test_func(self):
-        return self.request.user.is_superuser
+        return self.request.user.is_superuser or self.request.user.rol == 'Administrador'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

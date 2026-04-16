@@ -8,7 +8,7 @@ from Login.views import (
     CelularDetailView, agregar_al_carrito, ver_carrito,
     procesar_venta, detalle_factura, ClienteCreateView,
     restar_del_carrito, eliminar_item_carrito, ReporteVentasView,
-    InventarioListView, ReporteDashView, buscar_cliente, actualizar_cantidad_ajax
+    InventarioListView, buscar_cliente, actualizar_cantidad_ajax
 )
 
 urlpatterns = [
@@ -40,7 +40,6 @@ urlpatterns = [
     path('cliente/nuevo/', ClienteCreateView.as_view(), name='crear_cliente'),
     path('ventas/reporte/', ReporteVentasView.as_view(), name='reporte_ventas'),
     path('inventario/', InventarioListView.as_view(), name='lista_inventario'),
-    path('reportes/', ReporteDashView.as_view(), name='dashboard_reportes'),
     path('carrito/actualizar-ajax/', actualizar_cantidad_ajax, name='actualizar_cantidad_ajax'),
 ]
 

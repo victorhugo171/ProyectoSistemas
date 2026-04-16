@@ -275,49 +275,7 @@ class InventarioListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['bajo_stock'] = Producto.objects.filter(stock__lt=5).count()
         return context
 
-class ReporteDashView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    template_name = 'celulares/reportes.html'
 
-    def test_func(self):
-        return self.request.user.is_superuser or self.request.user.rol == 'Administrador'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        ahora = timezone.now()
-        
-        # KPI Cards
-        context['ventas_dia'] = Venta.objects.filter(fecha__date=ahora.date()).count()
-        monto_total = Venta.objects.aggregate(Sum('total'))['total__sum'] or 0
-        num_ventas = Venta.objects.count()
-        context['ticket_medio'] = round(monto_total / num_ventas, 2) if num_ventas > 0 else 0
-        
-        # Producto Estrella (más vendido en cantidad)
-        estrella = DetalleVenta.objects.values('producto__nombre')\
-            .annotate(total=Sum('cantidad'))\
-            .order_by('-total').first()
-        context['producto_estrella'] = estrella['producto__nombre'] if estrella else "N/A"
-
-        # Datos para gráficos (JSON para Chart.js)
-        # 1. Ventas últimos 7 días
-        siete_dias_atras = ahora - timezone.timedelta(days=7)
-        ventas_diarias = Venta.objects.filter(fecha__gte=siete_dias_atras)\
-            .annotate(dia=TruncDate('fecha'))\
-            .values('dia')\
-            .annotate(total=Sum('total'))\
-            .order_by('dia')
-        
-        context['labels_dias'] = json.dumps([v['dia'].strftime('%d/%m') for v in ventas_diarias])
-        context['data_dias'] = json.dumps([float(v['total']) for v in ventas_diarias])
-
-        # 2. Top 5 productos
-        top_productos = DetalleVenta.objects.values('producto__nombre')\
-            .annotate(total_vendido=Sum('cantidad'))\
-            .order_by('-total_vendido')[:5]
-        
-        context['labels_prod'] = json.dumps([p['producto__nombre'] for p in top_productos])
-        context['data_prod'] = json.dumps([int(p['total_vendido']) for p in top_productos])
-
-        return context
 
 @login_required
 def buscar_cliente(request):

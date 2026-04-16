@@ -160,7 +160,7 @@
                     </thead>
                     <tbody>
                         {% for item in items %}
-                        <tr>
+                        <tr id="cart-item-{{ item.producto.pk }}">
                             <td>
                                 <div class="fw-bold">{{ item.producto.nombre }}</div>
                                 <small class="text-muted">{{ item.producto.sku_codigo }}</small>
@@ -168,12 +168,12 @@
                             <td>Bs {{ item.producto.precio }}</td>
                             <td class="text-center">
                                 <div class="qty-control">
-                                    <a href="{% url 'restar_carrito' item.producto.pk %}" class="btn-qty text-decoration-none">-</a>
-                                    <span class="fw-bold px-1">{{ item.cantidad }}</span>
-                                    <a href="{% url 'agregar_carrito' item.producto.pk %}" class="btn-qty text-decoration-none">+</a>
+                                    <button type="button" class="btn-qty" onclick="updateQuantity({{ item.producto.pk }}, 'restar')">-</button>
+                                    <span class="fw-bold px-1 qty-display">{{ item.cantidad }}</span>
+                                    <button type="button" class="btn-qty" onclick="updateQuantity({{ item.producto.pk }}, 'sumar')">+</button>
                                 </div>
                             </td>
-                            <td class="text-end fw-bold">Bs {{ item.subtotal }}</td>
+                            <td class="text-end fw-bold">Bs <span class="subtotal-display">{{ item.subtotal }}</span></td>
                             <td class="text-end">
                                 <a href="{% url 'eliminar_item_carrito' item.producto.pk %}" class="btn-remove text-decoration-none">
                                     <i class="fas fa-trash-alt"></i>
@@ -204,7 +204,7 @@
                 
                 <div class="mb-4">
                     <label class="form-label fw-bold text-muted small">TOTAL A COBRAR</label>
-                    <div class="total-display">Bs {{ total }}</div>
+                    <div class="total-display" id="total-carrito-display">Bs {{ total }}</div>
                 </div>
 
                 <form action="{% url 'procesar_venta' %}" method="post" id="ventaForm">
@@ -269,6 +269,7 @@
                     <div class="mb-4">
                         <label class="form-label fw-bold text-muted small">MÉTODO DE PAGO</label>
                         <div class="row g-2">
+                            {% if user.rol != 'Usuario' %}
                             <div class="col-6">
                                 <input type="radio" class="btn-check" name="metodo_pago" id="pago_efectivo" value="Efectivo" checked onchange="toggleQR(false)">
                                 <label class="btn btn-outline-success w-100 py-3 rounded-4 d-flex flex-column align-items-center gap-2" for="pago_efectivo">
@@ -283,11 +284,20 @@
                                     <span class="small fw-bold">QR / TRANSF.</span>
                                 </label>
                             </div>
+                            {% else %}
+                            <div class="col-12">
+                                <input type="radio" class="btn-check" name="metodo_pago" id="pago_qr" value="Transferencia" checked onchange="toggleQR(true)">
+                                <label class="btn btn-outline-primary w-100 py-3 rounded-4 d-flex flex-column align-items-center gap-2" for="pago_qr">
+                                    <i class="fas fa-qrcode fa-lg"></i>
+                                    <span class="small fw-bold">CÓDIGO QR / TRANSFERENCIA</span>
+                                </label>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
 
                     <!-- Botón para ver QR (Manejo dinámico) -->
-                    <div id="qr_button_container" class="mb-4 animate__animated animate__fadeIn" style="display: none;">
+                    <div id="qr_button_container" class="mb-4 animate__animated animate__fadeIn" style="{% if user.rol == 'Usuario' %}display: block;{% else %}display: none;{% endif %}">
                         <button type="button" class="btn btn-outline-primary w-100 rounded-pill fw-bold border-2" data-bs-toggle="modal" data-bs-target="#qrModal">
                             <i class="fas fa-qrcode me-2"></i> VER CÓDIGO QR DE PAGO
                         </button>
@@ -369,12 +379,57 @@
     }
 
     // Permitir buscar al presionar Enter
-    document.getElementById('doc_search').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            searchClient();
-        }
-    });
+    const docSearch = document.getElementById('doc_search');
+    if (docSearch) {
+        docSearch.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchClient();
+            }
+        });
+    }
+
+    function updateQuantity(productId, action) {
+        fetch('{% url "actualizar_cantidad_ajax" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                'producto_id': productId,
+                'accion': action
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.removido) {
+                    const row = document.getElementById(`cart-item-${productId}`);
+                    if (row) row.remove();
+                    if (data.cart_count === 0) location.reload();
+                } else {
+                    const row = document.getElementById(`cart-item-${productId}`);
+                    if (row) {
+                        row.querySelector('.qty-display').innerText = data.nueva_cantidad;
+                        row.querySelector('.subtotal-display').innerText = data.subtotal_item.toFixed(2);
+                    }
+                }
+                
+                const totalDisplay = document.getElementById('total-carrito-display');
+                if (totalDisplay) totalDisplay.innerText = `Bs ${data.total_carrito.toFixed(2)}`;
+                
+                const badge = document.getElementById('cart-badge-count');
+                if (badge) {
+                    badge.innerText = data.cart_count;
+                    badge.style.display = data.cart_count > 0 ? 'inline-flex' : 'none';
+                }
+            } else {
+                console.error('Error:', data.error);
+            }
+        })
+        .catch(err => console.error('Fetch error:', err));
+    }
 
 </script>
 

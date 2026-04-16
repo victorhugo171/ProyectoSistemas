@@ -436,20 +436,12 @@
                 </li>
                 {% endif %}
 
-                {% if user.is_superuser or user.rol == 'Administrador' %}
-                <li class="{% if request.resolver_match.url_name == 'dashboard_reportes' %}active{% endif %}">
-                    <a href="{% url 'dashboard_reportes' %}">
-                        <i class="fas fa-chart-line"></i> Reportes
-                    </a>
-                </li>
-                {% endif %}
+
 
                 <li class="{% if request.resolver_match.url_name == 'ver_carrito' %}active{% endif %}">
                     <a href="{% url 'ver_carrito' %}">
                         <i class="fas fa-shopping-cart"></i> Carrito
-                        {% if cart_count > 0 %}
-                        <span class="badge-count">{{ cart_count }}</span>
-                        {% endif %}
+                        <span id="cart-badge-count" class="badge-count" {% if cart_count == 0 %}style="display: none;"{% endif %}>{{ cart_count }}</span>
                     </a>
                 </li>
 
@@ -481,10 +473,10 @@
                     </div>
                 </div>
 
-                <div class="search-bar">
+                <form action="{% url 'inicio' %}" method="get" class="search-bar m-0">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Buscar productos...">
-                </div>
+                    <input type="text" name="q" placeholder="Buscar productos..." value="{{ request.GET.q }}">
+                </form>
 
                 <div class="user-profile">
                     {% if user.is_authenticated %}

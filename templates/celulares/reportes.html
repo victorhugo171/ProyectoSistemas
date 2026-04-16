@@ -19,7 +19,6 @@
         </div>
     </div>
 
-    <!-- KPI Cards -->
     <div class="row g-4 mb-5">
         <div class="col-md-4">
             <div class="card border-0 shadow-sm rounded-4 p-4 position-relative overflow-hidden">
@@ -49,32 +48,22 @@
                 </div>
             </div>
         </div>
+        </div>
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 p-4 position-relative overflow-hidden">
-                <div class="card-body p-0">
-                    <span class="text-muted small fw-bold text-uppercase d-block mb-1">Producto Estrella</span>
-                    <h2 class="fw-900 mb-0 text-primary">{{ producto_estrella }}</h2>
-                    <div class="mt-2">
-                        <span class="text-muted small fw-bold">Más vendido recientemente</span>
-                    </div>
-                </div>
-                <div class="card-bg-icon text-warning">
-                    <i class="fas fa-star"></i>
-                </div>
-            </div>
+            <!-- Sección de Producto Estrella removida -->
         </div>
     </div>
 
-    <!-- Charts Row -->
+    
     <div class="row g-4">
-        <!-- Tendencia de Ventas (Line Chart) -->
+        
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
                 <h5 class="fw-bold mb-4">Tendencia de Ventas (Bs)</h5>
                 <canvas id="salesTrendsChart" height="250"></canvas>
             </div>
         </div>
-        <!-- Top Productos (Bar Chart) -->
+    
         <div class="col-lg-5">
             <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
                 <h5 class="fw-bold mb-4">Top 5 Productos Vendidos</h5>
@@ -103,11 +92,11 @@
 </style>
 
 <script>
-    // Configuración compartida de fuentes
+   
     Chart.defaults.font.family = "'Inter', sans-serif";
     Chart.defaults.color = "#9ca3af";
 
-    // 1. Gráfico de Tendencia (Líneas)
+    
     const ctxTrends = document.getElementById('salesTrendsChart').getContext('2d');
     new Chart(ctxTrends, {
         type: 'line',
@@ -140,7 +129,7 @@
         }
     });
 
-    // 2. Gráfico de Top Productos (Barras Horizontales)
+
     const ctxProd = document.getElementById('topProductsChart').getContext('2d');
     new Chart(ctxProd, {
         type: 'bar',

@@ -1,5 +1,6 @@
 import json
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, TemplateView
 from django.contrib.auth import get_user_model
@@ -320,7 +321,6 @@ class ReporteDashView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
 @login_required
 def buscar_cliente(request):
-    from django.http import JsonResponse
     doc = request.GET.get('doc', '')
     if doc:
         cliente = Cliente.objects.filter(documento=doc, estado='Activo').first()
@@ -332,3 +332,50 @@ def buscar_cliente(request):
                 'documento': cliente.documento
             })
     return JsonResponse({'success': False})
+
+@login_required
+def actualizar_cantidad_ajax(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            producto_id = data.get('producto_id')
+            accion = data.get('accion')
+
+            producto = get_object_or_404(Producto, pk=producto_id)
+            carrito, _ = Carrito.objects.get_or_create(usuario=request.user, estado='Activo')
+            item = DetalleCarrito.objects.filter(carrito=carrito, producto=producto).first()
+
+            nueva_cantidad = 0
+            subtotal_item = 0
+            removido = False
+
+            if item:
+                if accion == 'sumar':
+                    if item.cantidad < producto.stock:
+                        item.cantidad += 1
+                        item.save()
+                elif accion == 'restar':
+                    if item.cantidad > 1:
+                        item.cantidad -= 1
+                        item.save()
+                    else:
+                        item.delete()
+                        item = None
+                        removido = True
+                
+                if item:
+                    nueva_cantidad = item.cantidad
+                    subtotal_item = float(item.subtotal())
+            
+            return JsonResponse({
+                'success': True,
+                'nueva_cantidad': nueva_cantidad,
+                'subtotal_item': subtotal_item,
+                'total_carrito': float(carrito.total()),
+                'cart_count': carrito.detalles.count(),
+                'removido': removido
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+            
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)

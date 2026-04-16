@@ -18,7 +18,7 @@
         </div>
     </div>
 
-    <!-- Resumen de Estadísticas (Mini Cards) -->
+ 
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-md-4 col-xl-3">
             <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
@@ -40,7 +40,7 @@
         </div>
     </div>
 
-    <!-- Tabla de Ventas -->
+
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -65,8 +65,8 @@
                             <span class="badge bg-light text-dark fw-bold border">{{ v.factura.numero_factura|default:"S/N" }}</span>
                         </td>
                         <td>
-                            <div class="fw-600">{{ v.factura.razon_social|default:v.cliente.nombre }}</div>
-                            <small class="text-muted">NIT/Doc: {{ v.factura.nit|default:v.cliente.documento }}</small>
+                            <div class="fw-600">{{ v.cliente.nombre }}</div>
+                            <small class="text-muted">Doc: {{ v.cliente.documento }}</small>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
@@ -93,7 +93,7 @@
                             </div>
                         </td>
                     </tr>
-                    <!-- Detalle Colapsable -->
+             
                     <tr class="collapse" id="detalle-{{ v.id_venta }}">
                         <td colspan="6" class="bg-light p-4">
                             <div class="card border-0 rounded-4 shadow-sm p-3">
@@ -171,7 +171,7 @@
 
     .collapse.show + tr { border-top: none; }
     
-    /* Efecto de zebra light para lo colapsado */
+  
     .bg-light { background-color: #f8fafc !important; }
 </style>
 {% endblock %}

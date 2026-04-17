@@ -1,0 +1,76 @@
+{% for v in ventas %}
+<tr>
+    <td class="ps-4">
+        <div class="fw-bold">{{ v.fecha|date:"d/m/Y" }}</div>
+        <small class="text-muted">{{ v.fecha|date:"H:i" }}</small>
+    </td>
+    <td>
+        <span class="badge bg-light text-dark fw-bold border">{{ v.factura.numero_factura|default:"S/N" }}</span>
+    </td>
+    <td>
+        <div class="fw-600">{{ v.cliente.nombre }}</div>
+        <small class="text-muted">Doc: {{ v.cliente.documento }}</small>
+    </td>
+    <td>
+        <div class="d-flex align-items-center">
+            {% if v.usuario.rol == 'Usuario' %}
+                <div class="avatar-mini me-2 bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 text-center" style="width: 28px; height: 28px; border-radius: 8px; line-height: 26px; font-weight: 800; font-size: 0.7rem;">S</div>
+                <span class="fw-bold text-secondary">Sistema</span>
+            {% else %}
+                <div class="avatar-mini me-2">{{ v.usuario.username.0|upper }}</div>
+                <span class="fw-600">{{ v.usuario.nombre_completo|default:v.usuario.username }}</span>
+            {% endif %}
+        </div>
+    </td>
+    <td class="text-end fw-900 text-primary">
+        Bs {{ v.total }}
+    </td>
+    <td class="pe-4 text-center">
+        <div class="d-flex justify-content-center gap-2">
+            {% if v.factura %}
+            <a href="{% url 'detalle_factura' v.factura.pk %}" class="btn btn-sm btn-action bg-primary bg-opacity-10 text-primary border-primary border-opacity-25" title="Ver Factura">
+                <i class="fas fa-eye"></i>
+            </a>
+            {% endif %}
+            <button class="btn btn-sm btn-action" type="button" data-bs-toggle="collapse" data-bs-target="#detalle-{{ v.id_venta }}">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+    </td>
+</tr>
+
+<tr class="collapse" id="detalle-{{ v.id_venta }}">
+    <td colspan="6" class="bg-light p-4">
+        <div class="card border-0 rounded-4 shadow-sm p-3">
+            <h6 class="fw-bold mb-3 small text-muted text-uppercase">Productos en esta venta:</h6>
+            <table class="table table-sm table-borderless mb-0">
+                <thead>
+                    <tr class="border-bottom">
+                        <th class="text-muted small">Producto</th>
+                        <th class="text-center text-muted small">Cantidad</th>
+                        <th class="text-end text-muted small">P. Unitario</th>
+                        <th class="text-end text-muted small">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in v.detalles.all %}
+                    <tr>
+                        <td class="fw-600 py-2">{{ d.producto.nombre }}</td>
+                        <td class="text-center py-2">{{ d.cantidad }}</td>
+                        <td class="text-end py-2">Bs {{ d.precio_unitario }}</td>
+                        <td class="text-end fw-bold py-2">Bs {{ d.subtotal }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="6" class="text-center py-5 text-muted">
+        <i class="fas fa-receipt fa-3x mb-3 opacity-25"></i>
+        <p class="mb-0">No se encontraron ventas registradas.</p>
+    </td>
+</tr>
+{% endfor %}

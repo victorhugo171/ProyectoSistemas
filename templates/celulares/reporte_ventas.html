@@ -41,6 +41,31 @@
     </div>
 
 
+    <div class="row mb-4">
+        <div class="col-12 col-md-8 col-lg-6">
+            <form method="GET" class="d-flex" id="sales-search-form">
+                <div class="input-group shadow-sm rounded-4 overflow-hidden bg-white border-0">
+                    <span class="input-group-text bg-white border-0 ps-3">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" name="sales_q" id="sales-search-input" class="form-control border-0 py-2" 
+                           placeholder="Buscar Nº Factura, Cliente o CI..." 
+                           value="{{ request.GET.sales_q|default:'' }}"
+                           autocomplete="off">
+                    <div id="search-spinner" class="d-none align-items-center pe-3 bg-white">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    </div>
+                    {% if request.GET.sales_q %}
+                    <a href="{% url 'reporte_ventas' %}" class="btn bg-white border-0 text-muted px-3 d-flex align-items-center">
+                        <i class="fas fa-times"></i>
+                    </a>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">Buscar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -54,81 +79,8 @@
                         <th class="pe-4 py-3 text-muted small fw-bold text-uppercase text-center" style="width: 100px;">Detalles</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for v in ventas %}
-                    <tr>
-                        <td class="ps-4">
-                            <div class="fw-bold">{{ v.fecha|date:"d/m/Y" }}</div>
-                            <small class="text-muted">{{ v.fecha|date:"H:i" }}</small>
-                        </td>
-                        <td>
-                            <span class="badge bg-light text-dark fw-bold border">{{ v.factura.numero_factura|default:"S/N" }}</span>
-                        </td>
-                        <td>
-                            <div class="fw-600">{{ v.cliente.nombre }}</div>
-                            <small class="text-muted">Doc: {{ v.cliente.documento }}</small>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                {% if v.usuario.rol == 'Usuario' %}
-                                    <div class="avatar-mini me-2 bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 text-center" style="width: 28px; height: 28px; border-radius: 8px; line-height: 26px; font-weight: 800; font-size: 0.7rem;">S</div>
-                                    <span class="fw-bold text-secondary">Sistema</span>
-                                {% else %}
-                                    <div class="avatar-mini me-2">{{ v.usuario.username.0|upper }}</div>
-                                    <span class="fw-600">{{ v.usuario.nombre_completo|default:v.usuario.username }}</span>
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td class="text-end fw-900 text-primary">
-                            Bs {{ v.total }}
-                        </td>
-                        <td class="pe-4 text-center">
-                            <div class="d-flex justify-content-center gap-2">
-                                <a href="{% url 'detalle_factura' v.factura.pk %}" class="btn btn-sm btn-action bg-primary bg-opacity-10 text-primary border-primary border-opacity-25" title="Ver Factura">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <button class="btn btn-sm btn-action" type="button" data-bs-toggle="collapse" data-bs-target="#detalle-{{ v.id_venta }}">
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-             
-                    <tr class="collapse" id="detalle-{{ v.id_venta }}">
-                        <td colspan="6" class="bg-light p-4">
-                            <div class="card border-0 rounded-4 shadow-sm p-3">
-                                <h6 class="fw-bold mb-3 small text-muted text-uppercase">Productos en esta venta:</h6>
-                                <table class="table table-sm table-borderless mb-0">
-                                    <thead>
-                                        <tr class="border-bottom">
-                                            <th class="text-muted small">Producto</th>
-                                            <th class="text-center text-muted small">Cantidad</th>
-                                            <th class="text-end text-muted small">P. Unitario</th>
-                                            <th class="text-end text-muted small">Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for d in v.detalles.all %}
-                                        <tr>
-                                            <td class="fw-600 py-2">{{ d.producto.nombre }}</td>
-                                            <td class="text-center py-2">{{ d.cantidad }}</td>
-                                            <td class="text-end py-2">Bs {{ d.precio_unitario }}</td>
-                                            <td class="text-end fw-bold py-2">Bs {{ d.subtotal }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-5 text-muted">
-                            <i class="fas fa-receipt fa-3x mb-3 opacity-25"></i>
-                            <p class="mb-0">No se encontraron ventas registradas.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                <tbody id="ventas-table-body">
+                    {% include 'celulares/_tabla_ventas.html' %}
                 </tbody>
             </table>
         </div>
@@ -174,4 +126,53 @@
   
     .bg-light { background-color: #f8fafc !important; }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchForm = document.getElementById('sales-search-form');
+        const searchInput = document.getElementById('sales-search-input');
+        const tableBody = document.getElementById('ventas-table-body');
+        const spinner = document.getElementById('search-spinner');
+        let timeout = null;
+
+        function performSearch() {
+            const query = searchInput.value;
+            spinner.classList.remove('d-none');
+            spinner.classList.add('d-flex');
+
+            fetch(`{% url 'reporte_ventas' %}?sales_q=${encodeURIComponent(query)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                tableBody.innerHTML = html;
+                spinner.classList.add('d-none');
+                spinner.classList.remove('d-flex');
+                
+                // Update URL without refreshing
+                const newUrl = query ? `?sales_q=${encodeURIComponent(query)}` : window.location.pathname;
+                window.history.pushState({path: newUrl}, '', newUrl);
+            })
+            .catch(error => {
+                console.error('Error fetching sales:', error);
+                spinner.classList.add('d-none');
+                spinner.classList.remove('d-flex');
+            });
+        }
+
+        searchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            performSearch();
+        });
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(timeout);
+            timeout = setTimeout(performSearch, 500); // 500ms debounce
+        });
+    });
+</script>
 {% endblock %}

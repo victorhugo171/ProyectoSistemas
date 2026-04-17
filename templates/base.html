@@ -475,7 +475,7 @@
 
                 <form action="{% url 'inicio' %}" method="get" class="search-bar m-0">
                     <i class="fas fa-search"></i>
-                    <input type="text" name="q" placeholder="Buscar productos..." value="{{ request.GET.q }}">
+                    <input type="text" name="q" placeholder="Buscar productos..." value="{% if request.resolver_match.url_name == 'inicio' or request.resolver_match.url_name == 'lista_celulares' %}{{ request.GET.q|default:'' }}{% endif %}">
                 </form>
 
                 <div class="user-profile">

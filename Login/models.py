@@ -16,7 +16,7 @@ class Usuario(AbstractUser):
         ('Inactivo', 'Inactivo'),
     ]
     
-    nombre_completo = models.CharField(max_length=100) # Django's first_name/last_name can also be used
+    nombre_completo = models.CharField(max_length=100, null=True, blank=True) # Django's first_name/last_name can also be used
     rol = models.CharField(max_length=20, choices=ROL_CHOICES, default='Usuario')
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='Activo')
 

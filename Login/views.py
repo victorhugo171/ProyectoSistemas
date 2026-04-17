@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, TemplateView
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
+from django import forms
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Q, Sum, Count
 from django.db.models.functions import TruncDate
@@ -15,15 +16,55 @@ from .models import Producto, Carrito, DetalleCarrito, Cliente, Venta, DetalleVe
 User = get_user_model()
 
 class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(required=True, label="Correo Electrónico")
+
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("username", "nombre_completo")
+        fields = ("username", "nombre_completo", "email")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Permite que la contraseña se mantenga si hay un error de validación
+        if 'password1' in self.fields:
+            self.fields['password1'].widget.render_value = True
+        if 'password2' in self.fields:
+            self.fields['password2'].widget.render_value = True
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if username and ' ' in username:
+            raise forms.ValidationError("El nombre de usuario no puede contener espacios.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and ' ' in email:
+            raise forms.ValidationError("El correo electrónico no puede contener espacios.")
+        return email
+
+    def clean_password1(self):
+        password = self.cleaned_data.get('password1')
+        if password:
+            if ' ' in password:
+                raise forms.ValidationError("La contraseña no puede contener espacios.")
+            if len(password) < 8:
+                raise forms.ValidationError("La contraseña debe tener al menos 8 caracteres.")
+        return password
 
 # Formulario para uso administrativo (permite elegir rol)
 class AdminUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("username", "nombre_completo", "rol")
+        fields = ("username", "nombre_completo", "email", "rol")
+
+    def clean_password1(self):
+        password = self.cleaned_data.get('password1')
+        if password:
+            if ' ' in password:
+                raise forms.ValidationError("La contraseña no puede contener espacios.")
+            if len(password) < 8:
+                raise forms.ValidationError("La contraseña debe tener al menos 8 caracteres.")
+        return password
 
 
 class UsuarioABMView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -39,6 +80,25 @@ class RegistroUsuario(CreateView):
     form_class = CustomUserCreationForm
     template_name = 'registration/registro.html'
     success_url = reverse_lazy('inicio')
+
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            # Formatear errores de forma más sencilla para el frontend
+            errors = {}
+            for field, error_list in form.errors.items():
+                errors[field] = error_list[0]
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True, 
+                'redirect_url': str(self.success_url),
+                'message': '¡Registro exitoso! Redirigiendo...'
+            })
+        return response
 
 class UsuarioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = User
@@ -251,7 +311,22 @@ class ReporteVentasView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return self.request.user.is_superuser
 
     def get_queryset(self):
-        return Venta.objects.select_related('cliente', 'usuario', 'factura').prefetch_related('detalles__producto').all().order_by('-fecha')
+        queryset = Venta.objects.select_related('cliente', 'usuario', 'factura').prefetch_related('detalles__producto').all().order_by('-fecha')
+        q = self.request.GET.get('sales_q')
+        if q:
+            queryset = queryset.filter(
+                Q(factura__numero_factura__icontains=q) |
+                Q(cliente__nombre__icontains=q) |
+                Q(cliente__apellido__icontains=q) |
+                Q(cliente__documento__icontains=q)
+            )
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            self.object_list = self.get_queryset()
+            return render(request, 'celulares/_tabla_ventas.html', {'ventas': self.object_list})
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -298,6 +373,7 @@ def actualizar_cantidad_ajax(request):
             data = json.loads(request.body)
             producto_id = data.get('producto_id')
             accion = data.get('accion')
+            cantidad_directa = data.get('cantidad')
 
             producto = get_object_or_404(Producto, pk=producto_id)
             carrito, _ = Carrito.objects.get_or_create(usuario=request.user, estado='Activo')
@@ -308,7 +384,19 @@ def actualizar_cantidad_ajax(request):
             removido = False
 
             if item:
-                if accion == 'sumar':
+                if cantidad_directa is not None:
+                    # Ingreso manual de cantidad
+                    nueva_val = int(cantidad_directa)
+                    if nueva_val <= 0:
+                        item.delete()
+                        item = None
+                        removido = True
+                    else:
+                        if nueva_val > producto.stock:
+                            nueva_val = producto.stock
+                        item.cantidad = nueva_val
+                        item.save()
+                elif accion == 'sumar':
                     if item.cantidad < producto.stock:
                         item.cantidad += 1
                         item.save()

@@ -156,7 +156,7 @@
         <h2>Crear Cuenta</h2>
         <span class="register-subtitle">Únete a nuestra tienda hoy</span>
 
-        <form method="post">
+        <form method="post" autocomplete="off">
             {% csrf_token %}
             {% for field in form %}
             <div class="form-group">
@@ -180,4 +180,131 @@
         </div>
     </div>
 </div>
-{% endblock %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    // IDs estándar de Django para UserCreationForm
+    const usernameField = document.getElementById('id_username');
+    const emailField = document.getElementById('id_email');
+    const password1Field = document.getElementById('id_password1');
+    const password2Field = document.getElementById('id_password2');
+
+    const noSpaceFields = [usernameField, emailField, password1Field, password2Field];
+
+    // Prevenir espacio al escribir
+    noSpaceFields.forEach(field => {
+        if (field) {
+            field.addEventListener('keydown', function(e) {
+                if (e.key === ' ') {
+                    e.preventDefault();
+                }
+            });
+            // También limpiar espacios si se pega texto
+            field.addEventListener('input', function(e) {
+                if (this.value.includes(' ')) {
+                    this.value = this.value.replace(/\s/g, '');
+                }
+            });
+        }
+    });
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Limpiar errores previos
+        document.querySelectorAll('.errorlist').forEach(el => {
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 200);
+        });
+
+        // Validación extra frontend: longitud de contraseña
+        if (password1Field && password1Field.value.length < 8) {
+            const errorDiv = document.createElement('ul');
+            errorDiv.className = 'errorlist';
+            errorDiv.style.marginTop = '8px';
+            errorDiv.innerHTML = `<li><i class="fas fa-exclamation-circle"></i> La contraseña debe tener al menos 8 caracteres.</li>`;
+            password1Field.parentElement.appendChild(errorDiv);
+            password1Field.style.borderColor = '#ef4444';
+            password1Field.focus();
+            return; // Detener envío
+        }
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('.btn-register');
+        const originalBtnContent = submitBtn.innerHTML;
+        
+        // Feedback visual de carga
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(async response => {
+            const data = await response.json();
+            return { status: response.status, body: data };
+        })
+        .then(({ status, body }) => {
+            if (status === 200 && body.success) {
+                // Éxito: Mostrar mensaje y redirigir
+                submitBtn.style.background = '#10b981'; // Verde éxito
+                submitBtn.innerHTML = `<i class="fas fa-check-circle"></i> ${body.message}`;
+                
+                setTimeout(() => {
+                    window.location.href = body.redirect_url;
+                }, 1500);
+            } else {
+                // Error: Mostrar mensajes dinámicamente
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnContent;
+                
+                if (body.errors) {
+                    for (const [field, error] of Object.entries(body.errors)) {
+                        // El ID de Django suele ser 'id_nombre' o '__all__' para errores generales
+                        const targetId = field === '__all__' ? null : 'id_' + field;
+                        const fieldElement = targetId ? document.getElementById(targetId) : null;
+                        
+                        const errorDiv = document.createElement('ul');
+                        errorDiv.className = 'errorlist';
+                        errorDiv.style.marginTop = '8px';
+                        errorDiv.innerHTML = `<li><i class="fas fa-exclamation-circle"></i> ${error}</li>`;
+                        
+                        if (fieldElement) {
+                            fieldElement.parentElement.appendChild(errorDiv);
+                            fieldElement.style.borderColor = '#ef4444';
+                        } else {
+                            // Error general arriba del botón
+                            form.insertBefore(errorDiv, submitBtn);
+                        }
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnContent;
+            alert('Ocurrió un error en el servidor. Por favor, intenta de nuevo.');
+        });
+    });
+
+    // Limpiar color de error al escribir de nuevo
+    form.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            this.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            const error = this.parentElement.querySelector('.errorlist');
+            if (error) {
+                error.style.opacity = '0';
+                setTimeout(() => error.remove(), 200);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

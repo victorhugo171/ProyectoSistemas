@@ -139,6 +139,26 @@
         color: white;
         transform: scale(1.1);
     }
+
+    .qty-input {
+        width: 50px;
+        border: none;
+        text-align: center;
+        font-weight: 800;
+        background: transparent;
+        color: #111827;
+        -moz-appearance: textfield;
+    }
+
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .qty-input:focus {
+        outline: none;
+    }
 </style>
 
 <div class="container">
@@ -169,7 +189,13 @@
                             <td class="text-center">
                                 <div class="qty-control">
                                     <button type="button" class="btn-qty" onclick="updateQuantity({{ item.producto.pk }}, 'restar')">-</button>
-                                    <span class="fw-bold px-1 qty-display">{{ item.cantidad }}</span>
+                                    <input type="number" 
+                                           class="qty-input qty-display" 
+                                           value="{{ item.cantidad }}" 
+                                           min="1" 
+                                           max="{{ item.producto.stock }}"
+                                           oninput="if(parseInt(this.value) > parseInt(this.max)) this.value = this.max;"
+                                           onchange="updateQuantity({{ item.producto.pk }}, null, this.value)">
                                     <button type="button" class="btn-qty" onclick="updateQuantity({{ item.producto.pk }}, 'sumar')">+</button>
                                 </div>
                             </td>
@@ -389,17 +415,24 @@
         });
     }
 
-    function updateQuantity(productId, action) {
+    function updateQuantity(productId, action, manualValue = null) {
+        let bodyContent = {
+            'producto_id': productId
+        };
+
+        if (manualValue !== null) {
+            bodyContent['cantidad'] = manualValue;
+        } else {
+            bodyContent['accion'] = action;
+        }
+
         fetch('{% url "actualizar_cantidad_ajax" %}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': '{{ csrf_token }}'
             },
-            body: JSON.stringify({
-                'producto_id': productId,
-                'accion': action
-            })
+            body: JSON.stringify(bodyContent)
         })
         .then(response => response.json())
         .then(data => {
@@ -459,7 +492,7 @@
                 <p class="mt-4 text-muted small px-3">Escanee este código desde su aplicación móvil bancaria para realizar el pago de esta transacción.</p>
             </div>
             <div class="modal-footer border-0 p-4 pt-0">
-                <button type="button" class="btn btn-dark w-100 rounded-pill py-3 fw-bold" data-bs-dismiss="modal">LISTO, YA ESCANEÉ</button>
+                <button type="button" class="btn btn-dark w-100 rounded-pill py-3 fw-bold" data-bs-dismiss="modal">LISTO, YA PAGÉ</button>
             </div>
         </div>
     </div>

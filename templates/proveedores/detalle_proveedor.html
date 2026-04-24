@@ -89,7 +89,9 @@
                                 </td>
                                 <td class="fw-bold text-success">Bs. {{ compra.total }}</td>
                                 <td class="text-end pe-4">
-                                    <span class="badge bg-light text-dark">{{ compra.detalles.count }} items</span>
+                                    <a href="{% url 'detalle_compra' compra.pk %}" class="btn btn-sm btn-link text-decoration-none fw-bold">
+                                        Ver <i class="fas fa-chevron-right ms-1"></i>
+                                    </a>
                                 </td>
                             </tr>
                             {% empty %}

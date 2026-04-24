@@ -318,7 +318,7 @@ class Compra(models.Model):
     id_compra = models.AutoField(primary_key=True)
     fecha = models.DateTimeField(auto_now_add=True)
     tipo_documento = models.CharField(max_length=20, choices=TIPO_DOC_CHOICES, default='Factura')
-    numero_documento = models.CharField(max_length=50, unique=True)
+    numero_documento = models.CharField(max_length=50)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     observaciones = models.TextField(blank=True, null=True)
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_column='id_usuario')
@@ -326,6 +326,7 @@ class Compra(models.Model):
 
     class Meta:
         db_table = 'compra'
+        unique_together = ('proveedor', 'numero_documento')
 
     def __str__(self):
         return f"Compra {self.numero_documento} ({self.fecha.strftime('%d/%m/%Y')})"

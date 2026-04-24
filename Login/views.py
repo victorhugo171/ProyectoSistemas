@@ -607,6 +607,14 @@ class ProveedorDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         context['num_reclamos'] = self.object.reclamos.count()
         return context
 
+class CompraDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = Compra
+    template_name = 'proveedores/detalle_compra.html'
+    context_object_name = 'compra'
+
+    def test_func(self):
+        return self.request.user.rol in ['Administrador', 'Vendedor'] or self.request.user.is_superuser
+
 # --- GESTIÓN DE COMPRAS (APROVISIONAMIENTO) ---
 
 class CompraListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -666,7 +674,7 @@ def registrar_compra(request):
                             sku_codigo=sku,
                             nombre=nombre,
                             categoria=categoria,
-                            precio=costo * 1.3, # Precio sugerido (30% margen)
+                            precio=costo / 0.9, # El costo representa el 90% del precio (10% de margen sobre venta)
                             stock=0
                         )
                     

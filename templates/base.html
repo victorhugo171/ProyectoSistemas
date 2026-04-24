@@ -27,6 +27,13 @@
             --accent-red: #ef4444;
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            
+            /* Inyectar color de marca en Bootstrap */
+            --bs-primary: #6366f1;
+            --bs-primary-rgb: 99, 102, 241;
+            --bs-success-rgb: 16, 185, 129;
+            --bs-danger-rgb: 239, 68, 68;
+            --bs-warning-rgb: 245, 158, 11;
         }
 
         body {
@@ -37,6 +44,25 @@
             width: 100%;
             color: #111827;
             -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Global Color Harmonization --- */
+        .btn-primary { 
+            background-color: var(--primary); 
+            border-color: var(--primary); 
+        }
+        .btn-primary:hover { 
+            background-color: var(--primary-hover); 
+            border-color: var(--primary-hover); 
+        }
+        
+        /* Asegurar que el color principal se aplique sin romper opacidades */
+        .text-primary { color: var(--primary) !important; }
+        .border-primary { border-color: var(--primary) !important; }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
         }
 
         .wrapper {

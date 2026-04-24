@@ -12,7 +12,7 @@ from Login.views import (
     PagosPendientesListView, confirmar_pago, rechazar_pago,
     api_get_venta_status, api_notificaciones_admin, esperando_pago,
     ProveedorListView, ProveedorCreateView, ProveedorUpdateView, ProveedorDetailView,
-    CompraListView, registrar_compra, ReclamoListView, ReclamoCreateView
+    CompraListView, registrar_compra, CompraDetailView, ReclamoListView, ReclamoCreateView
 )
 
 urlpatterns = [
@@ -103,6 +103,7 @@ urlpatterns = [
     # Aprovisionamiento (Compras)
     path('proveedores/compras/', CompraListView.as_view(), name='lista_compras'),
     path('proveedores/compras/registrar/', registrar_compra, name='registrar_compra'),
+    path('proveedores/compras/detalle/<int:pk>/', CompraDetailView.as_view(), name='detalle_compra'),
 
     # Reclamos
     path('proveedores/reclamos/', ReclamoListView.as_view(), name='lista_reclamos'),

@@ -35,7 +35,13 @@
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label fw-bold small text-uppercase">Número de Documento</label>
-                                <input type="text" name="numero_documento" class="form-control" placeholder="Ej: 15234" required>
+                                <div class="input-group">
+                                    <input type="text" id="num_doc_input" name="numero_documento" class="form-control" placeholder="Ej: 15234" required>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="autoGenerarDoc()" title="Generar código interno">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted" style="font-size: 0.7rem;">Use el botón si no tiene factura del proveedor.</small>
                             </div>
                         </div>
                         <div class="mt-3">
@@ -150,6 +156,18 @@
 </div>
 
 <script>
+function autoGenerarDoc() {
+    const ahora = new Date();
+    // Formato: CMP + DDMM + HoraMinutoSegundos
+    const codigo = 'CMP-' + 
+                   ahora.getDate().toString().padStart(2, '0') + 
+                   (ahora.getMonth() + 1).toString().padStart(2, '0') + 
+                   ahora.getHours().toString().padStart(2, '0') + 
+                   ahora.getMinutes().toString().padStart(2, '0') + 
+                   ahora.getSeconds().toString().padStart(2, '0');
+    document.getElementById('num_doc_input').value = codigo;
+}
+
 let items = JSON.parse(localStorage.getItem('temp_compra_items') || '[]');
 const productosExistentes = [
     {% for p in productos %}
@@ -157,7 +175,8 @@ const productosExistentes = [
         id: {{ p.pk }}, 
         sku: "{{ p.sku_codigo|escapejs }}", 
         nombre: "{{ p.nombre|escapejs }}", 
-        costo: parseFloat("{{ p.precio|stringformat:'f' }}") / 1.3 
+        costo: parseFloat("{{ p.precio|stringformat:'f' }}") / 1.3,
+        imagen: "{% if p.imagen1 %}{{ p.imagen1.url }}{% else %}/static/img/no-image.png{% endif %}"
     },
     {% endfor %}
 ];
@@ -182,18 +201,19 @@ document.getElementById('buscarProducto').addEventListener('input', function(e) 
     if (filtrados.length > 0) {
         filtrados.forEach(p => {
             const item = document.createElement('a');
-            item.className = 'dropdown-item p-3 border-bottom d-flex justify-content-between align-items-center';
+            item.className = 'dropdown-item p-2 border-bottom d-flex align-items-center gap-3';
             item.href = '#';
             item.innerHTML = `
-                <div>
-                    <div class="fw-bold text-dark">${p.nombre}</div>
-                    <div class="text-muted small">${p.sku}</div>
+                <img src="${p.imagen}" class="rounded shadow-sm" style="width: 40px; height: 40px; object-fit: cover; background: #eee;">
+                <div class="flex-grow-1">
+                    <div class="fw-bold text-dark small" style="line-height: 1.1;">${p.nombre}</div>
+                    <div class="text-muted" style="font-size: 0.7rem;">${p.sku}</div>
                 </div>
                 <span class="badge bg-light text-dark">Bs. ${p.costo.toFixed(2)}</span>
             `;
             item.onclick = (e) => {
                 e.preventDefault();
-                agregarItem(p.id, p.sku, p.nombre, p.costo, 1);
+                agregarItem(p.id, p.sku, p.nombre, p.costo, 1, null, p.imagen);
                 resultados.classList.remove('show');
                 document.getElementById('buscarProducto').value = '';
             };
@@ -206,12 +226,14 @@ document.getElementById('buscarProducto').addEventListener('input', function(e) 
 });
 
 // --- LÓGICA DE TABLA ---
-function agregarItem(id, sku, nombre, costo, cantidad, catId = null) {
+function agregarItem(id, sku, nombre, costo, cantidad, catId = null, imagen = null) {
     const index = items.findIndex(i => i.id === id && id !== null);
     if (index > -1) {
         items[index].cantidad += cantidad;
     } else {
-        items.push({ id, sku, nombre, costo, cantidad, categoria_id: catId });
+        // Si no hay imagen (ej. producto nuevo), usamos un placeholder
+        const imgPath = imagen || '/static/img/no-image.png';
+        items.push({ id, sku, nombre, costo, cantidad, categoria_id: catId, imagen: imgPath });
     }
     renderTable();
 }
@@ -238,14 +260,22 @@ function renderTable() {
         row.className = 'item-row';
         row.innerHTML = `
             <td class="ps-4">
-                <div class="fw-bold text-dark">${item.nombre}</div>
-                <div class="text-muted small">${item.sku} ${item.id ? '' : '<span class="badge bg-warning text-dark mx-1">Nuevo</span>'}</div>
+                <div class="d-flex align-items-center gap-3">
+                    <img src="${item.imagen}" class="rounded border" style="width: 45px; height: 45px; object-fit: cover; background: #f8f9fa;">
+                    <div>
+                        <div class="fw-bold text-dark">${item.nombre}</div>
+                        <div class="text-muted small">${item.sku} ${item.id ? '' : '<span class="badge bg-warning text-dark mx-1">Nuevo</span>'}</div>
+                    </div>
+                </div>
             </td>
             <td>
-                <input type="number" class="form-control form-control-sm text-center" value="${item.cantidad}" onchange="cambiarCantidad(${idx}, this.value)">
+                <input type="number" class="form-control form-control-sm text-center" value="${item.cantidad}" onchange="cambiarCantidad(${idx}, this.value)" style="width: 70px; margin: 0 auto;">
             </td>
             <td>
-                <input type="number" class="form-control form-control-sm" step="0.01" value="${item.costo.toFixed(2)}" onchange="cambiarCosto(${idx}, this.value)">
+                <div class="input-group input-group-sm" style="width: 110px;">
+                    <span class="input-group-text">Bs</span>
+                    <input type="number" class="form-control" step="0.01" value="${item.costo.toFixed(2)}" onchange="cambiarCosto(${idx}, this.value)">
+                </div>
             </td>
             <td>
                 <div class="fw-bold text-dark">Bs. ${(item.cantidad * item.costo).toFixed(2)}</div>
@@ -353,8 +383,8 @@ renderTable();
 <style>
     .select2-custom { height: 45px; border-radius: 12px !important; }
     .form-control, .form-select { border-radius: 10px; padding: 0.6rem 1rem; border: 1.5px solid #f1f3f5; }
-    .form-control:focus { box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.08); border-color: #0d6efd; }
     .table th { border-top: none; }
     .dropdown-item:hover { background-color: #f8f9fa; }
+    .btn-primary { box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); }
 </style>
 {% endblock %}

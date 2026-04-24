@@ -75,7 +75,8 @@
         transition: 0.2s;
     }
 
-    .thumb-item:hover, .thumb-item.active {
+    .thumb-item:hover,
+    .thumb-item.active {
         border-color: var(--primary);
         transform: translateY(-2px);
     }
@@ -167,7 +168,9 @@
     }
 
     @media (max-width: 992px) {
-        .detail-grid { grid-template-columns: 1fr; }
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
@@ -175,7 +178,8 @@
     <div class="detail-header">
         <div>
             <h2>{{ celular.nombre }}</h2>
-            <p class="text-muted mb-0">SKU: {{ celular.sku_codigo }} | Categoría: {{ celular.categoria.nombre_categoria|default:"Sin Categoría" }}</p>
+            <p class="text-muted mb-0">SKU: {{ celular.sku_codigo }} | Categoría: {{
+                celular.categoria.nombre_categoria|default:"Sin Categoría" }}</p>
         </div>
         <div class="tag {% if celular.stock > 0 %}active{% endif %}">
             {% if celular.stock > 0 %} En Stock {% else %} Sin Stock {% endif %}
@@ -186,9 +190,9 @@
         <div class="img-display">
             <div class="img-main-box">
                 {% if celular.imagen1 %}
-                    <img id="mainImage" src="{{ celular.imagen1.url }}" alt="{{ celular.nombre }}">
+                <img id="mainImage" src="{{ celular.imagen1.url }}" alt="{{ celular.nombre }}">
                 {% else %}
-                    <div class="text-muted">No hay imagen disponible</div>
+                <div class="text-muted">No hay imagen disponible</div>
                 {% endif %}
             </div>
 
@@ -216,7 +220,7 @@
                 <span class="spec-label">Precio Final</span>
                 <span class="price-value">Bs {{ celular.precio }}</span>
             </div>
-            
+
             <div class="spec-item">
                 <span class="spec-label">Disponibilidad</span>
                 <span class="spec-value">{{ celular.stock }} unidades</span>
@@ -230,34 +234,38 @@
             <div class="spec-item full-width">
                 <span class="spec-label">Descripción del Producto</span>
                 <p class="spec-value mb-0" style="font-weight: 500; line-height: 1.6;">
-                    {{ celular.descripcion|default:"Este producto no cuenta con una descripción detallada en este momento." }}
+                    {{ celular.descripcion|default:"Este producto no cuenta con una descripción detallada en este
+                    momento." }}
                 </p>
             </div>
-            
+
             <!-- Botón de compra rápido y selector de cantidad -->
-            <div class="spec-item full-width mt-3" style="background: #f8fafc; border: 1px dashed var(--primary); padding: 24px;">
+            <div class="spec-item full-width mt-3"
+                style="background: #f8fafc; border: 1px dashed var(--primary); padding: 24px;">
                 <form action="{% url 'agregar_carrito' celular.pk %}" method="post">
                     {% csrf_token %}
                     <div class="row align-items-center g-3">
                         <div class="col-md-4">
                             <label class="spec-label">Cantidad</label>
-                            <input type="number" name="cantidad" id="buy-qty" value="1" min="1" max="{{ celular.stock }}" 
-                                   class="form-control rounded-pill border-2 px-3 fw-bold" 
-                                   style="border-color: var(--border-color);"
-                                   onchange="updateTotal()" onkeyup="updateTotal()"
-                                   {% if celular.stock == 0 %}disabled{% endif %}>
+                            <input type="number" name="cantidad" id="buy-qty" value="1" min="1"
+                                max="{{ celular.stock }}" class="form-control rounded-pill border-2 px-3 fw-bold"
+                                style="border-color: var(--border-color);" onchange="updateTotal()"
+                                onkeyup="updateTotal()" {% if celular.stock==0 %}disabled{% endif %}>
                         </div>
                         <div class="col-md-8 text-end">
                             <span class="spec-label">Total estimado</span>
-                            <span id="buy-total" class="price-value" style="font-size: 1.5rem;">Bs {{ celular.precio }}</span>
+                            <span id="buy-total" class="price-value" style="font-size: 1.5rem;">Bs {{ celular.precio
+                                }}</span>
                         </div>
                         <div class="col-12 mt-4">
                             {% if celular.stock > 0 %}
-                            <button type="submit" class="btn-buy d-block w-100 border-0" style="background: var(--primary); color: white; padding: 16px; border-radius: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;">
+                            <button type="submit" class="btn-buy d-block w-100 border-0"
+                                style="background: var(--primary); color: white; padding: 16px; border-radius: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;">
                                 <i class="fas fa-shopping-cart me-2"></i> Añadir {{ celular.nombre }} a mi bolsa
                             </button>
                             {% else %}
-                            <button type="button" class="btn btn-secondary d-block w-100 py-3 rounded-pill fw-bold" disabled>
+                            <button type="button" class="btn btn-secondary d-block w-100 py-3 rounded-pill fw-bold"
+                                disabled>
                                 <i class="fas fa-ban me-2"></i> Producto Agotado
                             </button>
                             {% endif %}
@@ -272,7 +280,7 @@
         <a href="{% url 'inicio' %}" class="btn-back">
             <i class="fas fa-chevron-left"></i> Volver al Catálogo
         </a>
-        
+
         {% if user.is_superuser %}
         <a href="{% url 'editar_celular' celular.pk %}" class="btn-edit">
             <i class="fas fa-edit me-2"></i> Editar Producto
@@ -283,7 +291,7 @@
 
 <script>
     const unitPrice = parseFloat("{{ celular.precio }}");
-    
+
     function swapImage(url, thumb) {
         document.getElementById('mainImage').src = url;
         document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
@@ -293,7 +301,7 @@
     function updateTotal() {
         const qty = document.getElementById('buy-qty').value;
         const totalElem = document.getElementById('buy-total');
-        
+
         if (qty && qty > 0) {
             const total = qty * unitPrice;
             totalElem.innerText = 'Bs ' + total.toFixed(2);

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Pagos Pendientes{% endblock %}
+
+{% block content %}
+<style>
+    .pending-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        padding: 30px;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .status-pill {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .pill-pending { background: #fef3c7; color: #92400e; }
+
+    .table-custom {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 12px;
+    }
+
+    .table-custom th {
+        color: var(--sidebar-text);
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        padding: 0 20px;
+        border: none;
+    }
+
+    .table-custom td {
+        background: #fdfdfd;
+        padding: 20px;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+
+    .table-custom td:first-child { border-left: 1px solid var(--border-color); border-radius: 12px 0 0 12px; }
+    .table-custom td:last-child { border-right: 1px solid var(--border-color); border-radius: 0 12px 12px 0; }
+
+    .table-custom tr:hover td {
+        background: #f8fafc;
+        border-color: var(--primary);
+    }
+
+    .btn-action {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        transition: 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-confirm { background: #dcfce7; color: #166534; }
+    .btn-confirm:hover { background: #22c55e; color: white; transform: translateY(-2px); }
+
+    .btn-reject { background: #fee2e2; color: #b91c1c; }
+    .btn-reject:hover { background: #ef4444; color: white; transform: translateY(-2px); }
+</style>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="fw-900 mb-1">Control de Cobros</h2>
+        <p class="text-muted">Confirme o rechace los pagos por transferencia antes de habilitar la facturación.</p>
+    </div>
+</div>
+
+<div class="pending-card" id="pagos-container">
+    {% include 'celulares/_tabla_pagos.html' %}
+</div>
+
+<!-- SCRIPT DE ACTUALIZACIÓN DINÁMICA DE LA TABLA -->
+<script>
+    const container = document.getElementById('pagos-container');
+    const tableUrl = "{% url 'pagos_pendientes' %}";
+    let lastKnownCount = null;
+
+    function refreshPaymentsTable() {
+        fetch(tableUrl, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.text())
+        .then(html => {
+            // Solo actualizamos el DOM si el contenido ha cambiado (para evitar parpadeos)
+            if (container.innerHTML !== html) {
+                container.innerHTML = html;
+                console.log('Tabla de pagos actualizada automáticamente.');
+            }
+        })
+        .catch(err => console.error('Error al actualizar la tabla:', err));
+    }
+
+    // Actualizar cada 5 segundos para una sensación de tiempo real
+    setInterval(refreshPaymentsTable, 5000);
+</script>
+{% endblock %}

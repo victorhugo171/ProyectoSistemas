@@ -89,32 +89,6 @@
         cursor: not-allowed;
     }
 
-    .qty-control {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        background: #fff;
-        border-radius: 12px;
-        padding: 4px 8px;
-        border: 1px solid var(--border-color);
-        width: fit-content;
-        margin: 0 auto;
-    }
-
-    .btn-qty {
-        width: 28px;
-        height: 28px;
-        border-radius: 8px;
-        border: none;
-        background: #f3f4f6;
-        color: #111827;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8rem;
-        transition: 0.2s;
-    }
 
     .btn-qty:hover {
         background: var(--primary);
@@ -141,13 +115,20 @@
     }
 
     .qty-input {
-        width: 50px;
+        width: 45px;
+        height: 32px;
         border: none;
         text-align: center;
         font-weight: 800;
         background: transparent;
         color: #111827;
         -moz-appearance: textfield;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+        vertical-align: middle;
     }
 
     .qty-input::-webkit-outer-spin-button,
@@ -158,6 +139,34 @@
 
     .qty-input:focus {
         outline: none;
+    }
+
+    .qty-control {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 4px;
+        border: 1px solid var(--border-color);
+        height: 40px;
+    }
+
+    .btn-qty {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        border: none;
+        background: #f3f4f6;
+        color: #111827;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        transition: 0.2s;
+        padding: 0;
+        margin: 0;
     }
 </style>
 
@@ -187,6 +196,7 @@
                             </td>
                             <td>Bs {{ item.producto.precio }}</td>
                             <td class="text-center">
+                                <!-- FLUJO AJAX: AL CAMBIAR LA CANTIDAD, SE LLAMA A 'updateQuantity' SIN RECARGAR LA PÁGINA -->
                                 <div class="qty-control">
                                     <button type="button" class="btn-qty" onclick="updateQuantity({{ item.producto.pk }}, 'restar')">-</button>
                                     <input type="number" 
@@ -201,6 +211,7 @@
                             </td>
                             <td class="text-end fw-bold">Bs <span class="subtotal-display">{{ item.subtotal }}</span></td>
                             <td class="text-end">
+                                <!-- FLUJO: ELIMINA EL PRODUCTO COMPLETAMENTE DEL CARRITO -->
                                 <a href="{% url 'eliminar_item_carrito' item.producto.pk %}" class="btn-remove text-decoration-none">
                                     <i class="fas fa-trash-alt"></i>
                                 </a>
@@ -233,10 +244,13 @@
                     <div class="total-display" id="total-carrito-display">Bs {{ total }}</div>
                 </div>
 
+                <!-- FORMULARIO DE CIERRE DE VENTA -->
+                <!-- ENVÍA LOS DATOS A 'procesar_venta' EN VIEWS.PY -->
                 <form action="{% url 'procesar_venta' %}" method="post" id="ventaForm">
                     {% csrf_token %}
                     <div class="mb-4">
                         {% if user.rol != 'Usuario' %}
+                        <!-- BUSCADOR DINÁMICO DE CLIENTES (USA AJAX PARA NO PERDER EL CARRITO) -->
                         <label class="form-label fw-bold small">BUSCAR CLIENTE POR CARNET</label>
                         <div class="input-group">
                             <input type="text" id="doc_search" class="form-control form-control-lg border-end-0" placeholder="Nº de Carnet..." style="border-radius: 12px 0 0 12px;">
@@ -267,12 +281,13 @@
                                     <i class="fas fa-exclamation-triangle"></i>
                                     <span class="small fw-bold">Cliente no registrado</span>
                                 </div>
-                                <a href="{% url 'crear_cliente' %}" class="btn btn-sm btn-warning w-100 rounded-pill fw-bold text-dark">
+                                <a href="{% url 'crear_cliente' %}" id="btn-registrar-cliente" class="btn btn-sm btn-warning w-100 rounded-pill fw-bold text-dark">
                                     <i class="fas fa-user-plus me-1"></i> REGISTRAR NUEVO CLIENTE
                                 </a>
                             </div>
                         </div>
                         {% else %}
+                        <!-- FLUJO PARA COMPRADORES FINALES: RELLENAN SUS DATOS DIRECTAMENTE -->
                         <div class="card bg-primary bg-opacity-10 border-primary border-opacity-25 rounded-3 p-3 mb-3">
                             <div class="d-flex align-items-center gap-2">
                                 <i class="fas fa-file-invoice text-primary"></i>
@@ -285,7 +300,11 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">NIT / CI</label>
-                            <input type="text" name="nit" class="form-control" placeholder="Ej: 1234567" required>
+                            <input type="text" name="nit" id="cliente_nit" class="form-control" placeholder="Ej: 1234567" required onblur="verifyNitIdentity()">
+                            <div id="nit_warning" class="mt-2 text-warning small fw-bold animate__animated animate__fadeIn" style="display: none;">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                <span id="nit_warning_msg"></span>
+                            </div>
                         </div>
                         {% endif %}
 
@@ -293,8 +312,8 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-muted small">MÉTODO DE PAGO</label>
-                        <div class="row g-2">
+                        {% if user.rol != 'Usuario' %}<label class="form-label fw-bold text-muted small">MÉTODO DE PAGO</label>{% endif %}
+                        <div class="row g-2" {% if user.rol == 'Usuario' %}style="display: none;"{% endif %}>
                             {% if user.rol != 'Usuario' %}
                             <div class="col-6">
                                 <input type="radio" class="btn-check" name="metodo_pago" id="pago_efectivo" value="Efectivo" checked onchange="toggleQR(false)">
@@ -312,11 +331,7 @@
                             </div>
                             {% else %}
                             <div class="col-12">
-                                <input type="radio" class="btn-check" name="metodo_pago" id="pago_qr" value="Transferencia" checked onchange="toggleQR(true)">
-                                <label class="btn btn-outline-primary w-100 py-3 rounded-4 d-flex flex-column align-items-center gap-2" for="pago_qr">
-                                    <i class="fas fa-qrcode fa-lg"></i>
-                                    <span class="small fw-bold">CÓDIGO QR / TRANSFERENCIA</span>
-                                </label>
+                                <input type="radio" class="btn-check" name="metodo_pago" id="pago_qr" value="Transferencia" checked>
                             </div>
                             {% endif %}
                         </div>
@@ -324,13 +339,14 @@
 
                     <!-- Botón para ver QR (Manejo dinámico) -->
                     <div id="qr_button_container" class="mb-4 animate__animated animate__fadeIn" style="{% if user.rol == 'Usuario' %}display: block;{% else %}display: none;{% endif %}">
-                        <button type="button" class="btn btn-outline-primary w-100 rounded-pill fw-bold border-2" data-bs-toggle="modal" data-bs-target="#qrModal">
-                            <i class="fas fa-qrcode me-2"></i> VER CÓDIGO QR DE PAGO
+                        <button type="button" class="btn btn-primary w-100 py-3 rounded-4 d-flex flex-column align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#qrModal">
+                            <i class="fas fa-qrcode fa-lg"></i>
+                            <span class="small fw-bold">MOSTRAR QR</span>
                         </button>
                     </div>
 
-                    <button type="submit" class="btn-finish" id="btnFinish" {% if user.rol != 'Usuario' %}disabled{% endif %}>
-                        COMPLETAR VENTA Y FACTURAR
+                    <button type="submit" class="btn-finish" id="btnFinish" disabled>
+                        {% if user.rol == 'Usuario' %}GUARDAR Y FINALIZAR{% else %}COMPLETAR VENTA Y FACTURAR{% endif %}
                     </button>
                 </form>
             </div>
@@ -339,6 +355,73 @@
 </div>
 
 <script>
+    let qrConfirmado = false;
+
+    // Persistencia de datos en el checkout
+    document.addEventListener('DOMContentLoaded', function() {
+        // Persistencia para Clientes (NIT)
+        const nitInput = document.getElementById('cliente_nit');
+        if (nitInput) {
+            const savedNit = localStorage.getItem('checkout_nit');
+            if (savedNit) nitInput.value = savedNit;
+
+            nitInput.addEventListener('input', (e) => {
+                localStorage.setItem('checkout_nit', e.target.value);
+                checkFinishButton();
+            });
+        }
+
+        // Persistencia para Vendedores (Búsqueda por Carnet)
+        const docSearchInput = document.getElementById('doc_search');
+        if (docSearchInput) {
+            const savedDoc = localStorage.getItem('checkout_doc_search');
+            if (savedDoc) {
+                docSearchInput.value = savedDoc;
+                searchClient(); // Ejecutar búsqueda automáticamente si había un documento
+            }
+            docSearchInput.addEventListener('input', (e) => {
+                localStorage.setItem('checkout_doc_search', e.target.value);
+            });
+        }
+        
+        checkFinishButton();
+    });
+
+    function verifyNitIdentity() {
+        const isUser = "{{ user.rol }}" === "Usuario";
+        if (!isUser) return;
+
+        const nit = document.getElementById('cliente_nit').value.trim();
+        const warningDiv = document.getElementById('nit_warning');
+        const warningMsg = document.getElementById('nit_warning_msg');
+        const currentUserName = "{{ user.nombre_completo|default:user.username }}".toUpperCase();
+        
+        if (nit.length < 5) {
+            warningDiv.style.display = 'none';
+            return;
+        }
+
+        fetch(`{% url 'buscar_cliente' %}?doc=${nit}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.exists) {
+                    const clientName = (data.nombre + ' ' + (data.apellido || '')).trim().toUpperCase();
+                    // Si el nombre no es similar al del usuario actual, advertimos
+                    if (clientName !== currentUserName && !currentUserName.includes(data.nombre.toUpperCase())) {
+                        warningMsg.innerText = `Este NIT pertenece a: ${clientName}. ¿Son sus datos?`;
+                        warningDiv.style.display = 'block';
+                    } else {
+                        warningDiv.style.display = 'none';
+                    }
+                } else {
+                    warningDiv.style.display = 'none';
+                }
+            })
+            .catch(() => {
+                warningDiv.style.display = 'none';
+            });
+    }
+
     function searchClient() {
         const input = document.getElementById('doc_search');
         const doc = input.value.trim();
@@ -356,24 +439,28 @@
                 const notFoundDiv = document.getElementById('client_not_found');
                 const nameSpan = document.getElementById('client_name');
                 const idInput = document.getElementById('cliente_id');
-                const btnFinish = document.getElementById('btnFinish');
 
                 if (data.success) {
                     nameSpan.innerText = data.nombre;
                     idInput.value = data.id;
                     resultDiv.style.display = 'block';
                     notFoundDiv.style.display = 'none';
-                    btnFinish.disabled = false;
                     input.classList.add('is-valid');
                     input.classList.remove('is-invalid');
                 } else {
                     resultDiv.style.display = 'none';
                     notFoundDiv.style.display = 'block';
                     idInput.value = "";
-                    btnFinish.disabled = true;
                     input.classList.add('is-invalid');
                     input.classList.remove('is-valid');
+                    
+                    // Actualizar link de registro con el documento buscado
+                    const regLink = document.getElementById('btn-registrar-cliente');
+                    if (regLink) {
+                        regLink.href = `{% url 'crear_cliente' %}?doc=${doc}`;
+                    }
                 }
+                checkFinishButton();
             })
             .catch(err => {
                 btn.innerHTML = originalIcon;
@@ -382,12 +469,45 @@
     }
 
     function toggleQR(show) {
+        const isUser = "{{ user.rol }}" === "Usuario";
         const btnContainer = document.getElementById('qr_button_container');
+        
+        // Mostrar si el método es QR, sin importar el rol (el cliente lo necesita para pagar)
         if (show) {
             btnContainer.style.display = 'block';
+            qrConfirmado = false; 
         } else {
             btnContainer.style.display = 'none';
+            qrConfirmado = true; // Efectivo no requiere confirmación QR
         }
+        checkFinishButton();
+    }
+
+    function confirmQR() {
+        qrConfirmado = true;
+        checkFinishButton();
+    }
+
+    function checkFinishButton() {
+        const isUser = "{{ user.rol }}" === "Usuario";
+        const btnFinish = document.getElementById('btnFinish');
+        
+        let clientReady = false;
+        if (isUser) {
+            const nit = document.getElementById('cliente_nit').value.trim();
+            clientReady = nit.length > 0;
+            // Para clientes, ahora sí obligamos a confirmar QR visualmente antes de finalizar
+        } else {
+            clientReady = document.getElementById('cliente_id').value !== "";
+        }
+
+        // Si es QR (Transferencia), debe estar confirmado
+        const metodoQR = document.getElementById('pago_qr').checked;
+        if (metodoQR && !qrConfirmado) {
+            clientReady = false; 
+        }
+        
+        btnFinish.disabled = !clientReady;
     }
 
     function resetClient() {
@@ -397,11 +517,30 @@
         input.value = "";
         input.classList.remove('is-valid', 'is-invalid');
         document.getElementById('cliente_id').value = "";
-        document.getElementById('btnFinish').disabled = true;
+        
+        // Limpiar persistencia
+        localStorage.removeItem('checkout_doc_search');
         
         // Reset pago default
         document.getElementById('pago_efectivo').checked = true;
         toggleQR(false);
+        checkFinishButton();
+    }
+
+    // Limpiar persistencia al enviar el formulario (venta exitosa)
+    const ventaForm = document.getElementById('ventaForm');
+    if (ventaForm) {
+        ventaForm.addEventListener('submit', function(e) {
+            // Prevenir doble envío
+            const btn = document.getElementById('btnFinish');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> PROCESANDO...';
+            }
+            
+            localStorage.removeItem('checkout_nit');
+            localStorage.removeItem('checkout_doc_search');
+        });
     }
 
     // Permitir buscar al presionar Enter
@@ -444,7 +583,12 @@
                 } else {
                     const row = document.getElementById(`cart-item-${productId}`);
                     if (row) {
-                        row.querySelector('.qty-display').innerText = data.nueva_cantidad;
+                        const qtyInput = row.querySelector('.qty-display');
+                        if (qtyInput.tagName === 'INPUT') {
+                            qtyInput.value = data.nueva_cantidad;
+                        } else {
+                            qtyInput.innerText = data.nueva_cantidad;
+                        }
                         row.querySelector('.subtotal-display').innerText = data.subtotal_item.toFixed(2);
                     }
                 }
@@ -492,7 +636,7 @@
                 <p class="mt-4 text-muted small px-3">Escanee este código desde su aplicación móvil bancaria para realizar el pago de esta transacción.</p>
             </div>
             <div class="modal-footer border-0 p-4 pt-0">
-                <button type="button" class="btn btn-dark w-100 rounded-pill py-3 fw-bold" data-bs-dismiss="modal">LISTO, YA PAGÉ</button>
+                <button type="button" class="btn btn-dark w-100 rounded-pill py-3 fw-bold" data-bs-dismiss="modal" onclick="confirmQR()">LISTO, YA PAGÉ</button>
             </div>
         </div>
     </div>

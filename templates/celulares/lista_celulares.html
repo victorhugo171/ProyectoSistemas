@@ -292,11 +292,15 @@
         </div>
 
         <div class="action-buttons">
+            <!-- FLUJO: AL HACER CLIC, SE DISPARA 'agregar_al_carrito' EN VIEWS.PY Y REDIRIGE AL CARRITO -->
             <a href="{% url 'agregar_carrito' c.pk %}" class="btn-buy">Comprar Ahora</a>
+            
+            <!-- FLUJO: LLEVA A LA FICHA TÉCNICA DETALLADA DEL CELULAR -->
             <a href="{% url 'detalle_celular' c.pk %}" class="btn-info">Más Información</a>
         </div>
 
         {% if user.is_superuser %}
+        <!-- GESTIÓN ADMINISTRATIVA: SOLO VISIBLE PARA SUPERUSUARIOS -->
         <div class="d-flex gap-2 mt-3 pt-3 border-top">
             <a href="{% url 'editar_celular' c.pk %}" class="btn btn-sm btn-outline-primary w-50">Editar</a>
             <a href="{% url 'eliminar_celular' c.pk %}" class="btn btn-sm btn-outline-danger w-50">Borrar</a>

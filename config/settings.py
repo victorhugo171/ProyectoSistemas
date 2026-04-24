@@ -62,7 +62,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'Login.context_processors.cart_count',
+                'Login.context_processors.global_context',
             ],
         },
     },
@@ -133,3 +133,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Configurar modelo de usuario personalizado en español
 AUTH_USER_MODEL = 'Login.Usuario'
+
+# Configuración de campo de auto-incremento por defecto
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

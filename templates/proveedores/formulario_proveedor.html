@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Proveedor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-header bg-dark text-white p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="icon-box bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <i class="fas fa-truck text-white fs-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 fw-bold">{% if object %}Editar{% else %}Registrar{% endif %} Proveedor</h3>
+                            <p class="text-white-50 small mb-0">Completa la información del suministrador</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-4">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold text-dark">Nombre o Razón Social</label>
+                                {{ form.nombre }}
+                                {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-dark">Tipo de Proveedor</label>
+                                {{ form.tipo }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark">NIT / Documento Identidad</label>
+                                {{ form.nit_documento }}
+                                <div class="form-text small">Identificación legal única.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark">Teléfono de Contacto</label>
+                                {{ form.telefono }}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold text-dark">Correo Electrónico</label>
+                                {{ form.email }}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold text-dark">Dirección Física</label>
+                                {{ form.direccion }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark">Estado Operativo</label>
+                                {{ form.estado }}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold text-dark">Observaciones Internas</label>
+                                {{ form.observaciones }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 mt-5">
+                            <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill shadow-sm fw-bold">
+                                <i class="fas fa-save me-2"></i> Guardar Proveedor
+                            </button>
+                            <a href="{% url 'lista_proveedores' %}" class="btn btn-light px-4 py-2 rounded-pill border">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border: 1.5px solid #eef0f2;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        background-color: #f8fafc;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+        background-color: #fff;
+    }
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    .card {
+        transition: transform 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}

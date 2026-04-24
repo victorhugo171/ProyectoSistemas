@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     Usuario, Cliente, Producto, Venta, DetalleVenta, Pago, Factura, 
     MovimientoInventario, CanalVenta, CategoriaProducto, Proveedor, 
-    Compra, DetalleCompra, Carrito, DetalleCarrito
+    Compra, DetalleCompra, Carrito, DetalleCarrito, ReclamoProveedor
 )
 
 class UsuarioCustomAdmin(UserAdmin):
@@ -27,8 +27,17 @@ class DetalleCompraInline(admin.TabularInline):
     extra = 1
 
 class CompraAdmin(admin.ModelAdmin):
-    list_display = ('id_compra', 'proveedor', 'usuario', 'fecha', 'numero_nota')
+    list_display = ('id_compra', 'proveedor', 'tipo_documento', 'numero_documento', 'total', 'fecha', 'usuario')
     inlines = [DetalleCompraInline]
+
+class ProveedorAdmin(admin.ModelAdmin):
+    list_display = ('id_proveedor', 'nombre', 'nit_documento', 'tipo', 'telefono', 'estado')
+    list_filter = ('tipo', 'estado')
+    search_fields = ('nombre', 'nit_documento')
+
+class ReclamoProveedorAdmin(admin.ModelAdmin):
+    list_display = ('id_reclamo', 'proveedor', 'producto', 'cantidad', 'estado', 'fecha_reclamo')
+    list_filter = ('estado', 'proveedor')
 
 class DetalleCarritoInline(admin.TabularInline):
     model = DetalleCarrito
@@ -47,6 +56,7 @@ admin.site.register(Factura)
 admin.site.register(MovimientoInventario)
 admin.site.register(CanalVenta)
 admin.site.register(CategoriaProducto)
-admin.site.register(Proveedor)
+admin.site.register(Proveedor, ProveedorAdmin)
 admin.site.register(Compra, CompraAdmin)
+admin.site.register(ReclamoProveedor, ReclamoProveedorAdmin)
 admin.site.register(Carrito, CarritoAdmin)

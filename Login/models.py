@@ -4,19 +4,21 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
 from django.conf import settings
 
-# --- USUARIO ---
+# --- USUARIO DE SISTEMA ---
+# Extiende AbstractUser de Django para añadir roles y estados personalizados.
 class Usuario(AbstractUser):
+    # Definición de roles permitidos en la plataforma.
     ROL_CHOICES = [
-        ('Administrador', 'Administrador'),
-        ('Vendedor', 'Vendedor'),
-        ('Usuario', 'Usuario'),
+        ('Administrador', 'Administrador'),  # Acceso total
+        ('Vendedor', 'Vendedor'),            # Acceso a ventas e inventario
+        ('Usuario', 'Usuario'),              # Cliente final (pestaña de compras)
     ]
     ESTADO_CHOICES = [
         ('Activo', 'Activo'),
         ('Inactivo', 'Inactivo'),
     ]
     
-    nombre_completo = models.CharField(max_length=100, null=True, blank=True) # Django's first_name/last_name can also be used
+    nombre_completo = models.CharField(max_length=100, null=True, blank=True)
     rol = models.CharField(max_length=20, choices=ROL_CHOICES, default='Usuario')
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='Activo')
 
@@ -25,7 +27,8 @@ class Usuario(AbstractUser):
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
 
-# --- CLIENTE ---
+# --- CLIENTE (Para Facturación) ---
+# Almacena los datos de la persona que compra (NIT/Carnet, Nombre, etc.)
 class Cliente(models.Model):
     id_cliente = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=100)
@@ -68,10 +71,20 @@ class CategoriaProducto(models.Model):
         return self.nombre_categoria
 
 # --- PROVEEDOR ---
+# Representa a los suministradores de mercadería (Personas o Empresas).
 class Proveedor(models.Model):
+    TIPO_CHOICES = [
+        ('Natural', 'Persona Natural'),
+        ('Empresa', 'Empresa/Jurídica'),
+    ]
     id_proveedor = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=150)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='Empresa')
+    nit_documento = models.CharField(max_length=20, unique=True, verbose_name="NIT o Documento")
     telefono = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(max_length=100, blank=True, null=True)
+    direccion = models.CharField(max_length=255, blank=True, null=True)
+    estado = models.CharField(max_length=10, default='Activo')
     observaciones = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -79,9 +92,10 @@ class Proveedor(models.Model):
         verbose_name_plural = 'Proveedores'
 
     def __str__(self):
-        return self.nombre
+        return f"{self.nombre} ({self.nit_documento})"
 
-# --- PRODUCTO ---
+# --- PRODUCTO (Celulares y Accesorios) ---
+# Representa los artículos físicos a la venta en el catálogo.
 class Producto(models.Model):
     ESTADO_CHOICES = [
         ('Activo', 'Activo'),
@@ -90,7 +104,7 @@ class Producto(models.Model):
     ]
     
     id_producto = models.AutoField(primary_key=True)
-    sku_codigo = models.CharField(max_length=50, unique=True)
+    sku_codigo = models.CharField(max_length=50, unique=True) # Código único de identificación
     nombre = models.CharField(max_length=100)
     categoria = models.ForeignKey(CategoriaProducto, on_delete=models.SET_NULL, null=True, blank=True, db_column='id_categoria') 
     precio = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
@@ -98,7 +112,7 @@ class Producto(models.Model):
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='Activo')
     descripcion = models.TextField(blank=True, null=True)
     
-    # Campos extra para mantener la UI "MOBILESTORE"
+    # Imágenes que se muestran en el catálogo (lista_celulares.html)
     imagen1 = models.ImageField(upload_to='productos/', blank=True, null=True)
     imagen2 = models.ImageField(upload_to='productos/', blank=True, null=True)
     imagen3 = models.ImageField(upload_to='productos/', blank=True, null=True)
@@ -109,10 +123,13 @@ class Producto(models.Model):
     def __str__(self):
         return f"{self.nombre} ({self.sku_codigo})"
 
+    # --- FLUJO DE INVENTARIO ---
+    # Este método se llama desde 'procesar_venta' para descontar stock automáticamente.
     def reducir_stock(self, cantidad, usuario, motivo="Venta", venta=None):
         if self.stock >= cantidad:
             self.stock -= cantidad
             self.save()
+            # Registra el historial del movimiento para auditoría.
             MovimientoInventario.objects.create(
                 producto=self,
                 usuario=usuario,
@@ -124,11 +141,12 @@ class Producto(models.Model):
             return True
         return False
 
-# --- VENTA ---
+# --- VENTA (Encabezado) ---
+# Representa el inicio de la transacción comercial.
 class Venta(models.Model):
     ESTADO_CHOICES = [
-        ('Iniciada', 'Iniciada'),
-        ('Pagada', 'Pagada'),
+        ('Iniciada', 'Iniciada'), # Creada pero sin pago confirmado
+        ('Pagada', 'Pagada'),     # Transacción completada con éxito
         ('Cancelada', 'Cancelada'),
     ]
     
@@ -143,33 +161,100 @@ class Venta(models.Model):
     class Meta:
         db_table = 'venta'
 
+    # --- FLUJO DE CIERRE DE VENTA ---
     def finalizar_venta(self, metodo_pago='Efectivo', nit='', razon_social=''):
-        """Genera el pago y la factura para esta venta."""
-        self.estado = 'Pagada'
-        self.save()
+        """Registra el pago y determina si genera la factura inmediatamente."""
+        from django.db import transaction
         
-        # Crear Pago
-        pago = Pago.objects.create(
-            venta=self,
-            metodo=metodo_pago,
-            monto=self.total,
-            estado='Completado',
-            fecha_pago=self.fecha
-        )
+        try:
+            with transaction.atomic():
+                # El estado de la Venta solo cambia a 'Pagada' si es Efectivo
+                is_cash = (metodo_pago == 'Efectivo')
+                self.estado = 'Pagada' if is_cash else 'Iniciada'
+                self.save()
+                
+                # 1. Registrar el Pago (Pendiente si no es efectivo)
+                estado_pago = 'Completado' if is_cash else 'Pendiente'
+                Pago.objects.update_or_create(
+                    venta=self,
+                    defaults={
+                        'metodo': metodo_pago,
+                        'monto': self.total,
+                        'estado': estado_pago,
+                        'fecha_pago': self.fecha
+                    }
+                )
+                
+                # 2. Generar Factura solo si es efectivo
+                if is_cash:
+                    return self.generar_factura(nit=nit, razon_social=razon_social)
+                
+                return None # No hay factura aún para transferencias
+        except Exception as e:
+            raise e
+
+    # --- LÓGICA DE FACTURACIÓN ---
+    def generar_factura(self, nit='', razon_social=''):
+        """Crea el registro legal de la factura con número correlativo."""
+        from django.db import transaction
         
-        # Crear Factura
-        ultimo_id = Factura.objects.all().order_by('id_factura').last()
-        nuevo_numero = f"FAC-{ (ultimo_id.id_factura + 1) if ultimo_id else 1:06d}"
-        
-        factura = Factura.objects.create(
-            venta=self,
-            numero_factura=nuevo_numero,
-            nit=nit,
-            razon_social=razon_social,
-            total=self.total,
-            estado='Emitida'
-        )
-        return factura
+        try:
+            with transaction.atomic():
+                # Generar número correlativo (FAC-XXXXXX)
+                max_id = Factura.objects.all().aggregate(models.Max('id_factura'))['id_factura__max'] or 0
+                nuevo_numero = f"FAC-{(max_id + 1):06d}"
+                
+                # Verificación de unicidad
+                counter = 1
+                while Factura.objects.filter(numero_factura=nuevo_numero).exists():
+                    nuevo_numero = f"FAC-{(max_id + 1 + counter):06d}"
+                    counter += 1
+
+                # Crear la Factura
+                factura = Factura.objects.create(
+                    venta=self,
+                    numero_factura=nuevo_numero,
+                    nit=nit if nit else self.cliente.documento,
+                    razon_social=razon_social if razon_social else self.cliente.nombre,
+                    total=self.total,
+                    estado='Emitida'
+                )
+                return factura
+        except Exception as e:
+            raise e
+
+    # --- REVERSIÓN DE STOCK ---
+    # Se llama cuando un administrador rechaza un pago o cancela una venta.
+    def cancelar_y_devolver_stock(self, usuario, motivo="Pago Rechazado"):
+        from django.db import transaction
+        try:
+            with transaction.atomic():
+                self.estado = 'Cancelada'
+                self.save()
+                
+                # Si hay un pago, lo marcamos como rechazado
+                if hasattr(self, 'pago'):
+                    self.pago.estado = 'Rechazado'
+                    self.pago.save()
+
+                # Devolvemos cada producto al inventario
+                for detalle in self.detalles.all():
+                    producto = detalle.producto
+                    producto.stock += detalle.cantidad
+                    producto.save()
+                    
+                    # Registramos el movimiento de Entrada por devolución
+                    MovimientoInventario.objects.create(
+                        producto=producto,
+                        usuario=usuario,
+                        venta=self,
+                        tipo_movimiento='Entrada',
+                        cantidad=detalle.cantidad,
+                        motivo=motivo
+                    )
+                return True
+        except Exception:
+            return False
 
 # --- DETALLE_VENTA ---
 class DetalleVenta(models.Model):
@@ -191,11 +276,17 @@ class Pago(models.Model):
         ('Transferencia', 'Transferencia'),
     ]
     
+    ESTADO_CHOICES = [
+        ('Pendiente', 'Pendiente'),
+        ('Completado', 'Completado'),
+        ('Rechazado', 'Rechazado'),
+    ]
+    
     id_pago = models.AutoField(primary_key=True)
     venta = models.OneToOneField(Venta, on_delete=models.CASCADE, db_column='id_venta')
     metodo = models.CharField(max_length=20, choices=METODO_CHOICES)
     monto = models.DecimalField(max_digits=10, decimal_places=2)
-    estado = models.CharField(max_length=50, default='Completado')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Completado')
     fecha_pago = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -215,17 +306,29 @@ class Factura(models.Model):
     class Meta:
         db_table = 'factura'
 
-# --- COMPRA ---
+# --- COMPRA (Aprovisionamiento) ---
+# Registro de entrada de mercadería masiva.
 class Compra(models.Model):
+    TIPO_DOC_CHOICES = [
+        ('Factura', 'Factura Legal'),
+        ('Nota de Venta', 'Nota de Venta'),
+        ('Recibo', 'Recibo'),
+        ('Referencia Libre', 'Referencia Libre / Comprobante Informal'),
+    ]
     id_compra = models.AutoField(primary_key=True)
     fecha = models.DateTimeField(auto_now_add=True)
-    numero_nota = models.CharField(max_length=50, unique=True)
+    tipo_documento = models.CharField(max_length=20, choices=TIPO_DOC_CHOICES, default='Factura')
+    numero_documento = models.CharField(max_length=50, unique=True)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     observaciones = models.TextField(blank=True, null=True)
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_column='id_usuario')
-    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, db_column='id_proveedor')
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, db_column='id_proveedor', related_name='compras')
 
     class Meta:
         db_table = 'compra'
+
+    def __str__(self):
+        return f"Compra {self.numero_documento} ({self.fecha.strftime('%d/%m/%Y')})"
 
 # --- DETALLE_COMPRA ---
 class DetalleCompra(models.Model):
@@ -238,6 +341,32 @@ class DetalleCompra(models.Model):
 
     class Meta:
         db_table = 'detalle_compra'
+
+# --- RECLAMO A PROVEEDOR ---
+# Permite registrar devoluciones o reclamos por fallas de origen.
+class ReclamoProveedor(models.Model):
+    ESTADO_CHOICES = [
+        ('Pendiente', 'Pendiente'),
+        ('En Proceso', 'En Proceso'),
+        ('Resuelto (Garantía)', 'Resuelto (Garantía)'),
+        ('Devuelto', 'Devuelto al Proveedor'),
+        ('Rechazado', 'Rechazado por Proveedor'),
+    ]
+    id_reclamo = models.AutoField(primary_key=True)
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name='reclamos')
+    compra = models.ForeignKey(Compra, on_delete=models.SET_NULL, null=True, blank=True, related_name='reclamos')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField()
+    motivo = models.TextField()
+    fecha_reclamo = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(max_length=25, choices=ESTADO_CHOICES, default='Pendiente')
+    resolucion = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'reclamo_proveedor'
+
+    def __str__(self):
+        return f"Reclamo #{self.pk} - {self.producto.nombre} ({self.estado})"
 
 # --- MOVIMIENTO_INVENTARIO ---
 class MovimientoInventario(models.Model):

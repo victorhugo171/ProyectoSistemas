@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Reclamos{% endblock %}
+
+{% block content %}
+<div class="page-header-responsive mb-4">
+    <div>
+        <h2 class="fw-bold mb-0 text-dark">Gestión de Garantías</h2>
+        <p class="text-muted small mb-0">Seguimiento de reclamos y devoluciones a proveedores</p>
+    </div>
+    <a href="{% url 'crear_reclamo' %}" class="btn btn-dark btn-responsive rounded-pill px-4 shadow-sm">
+        <i class="fas fa-exclamation-triangle me-2"></i> Registrar Reclamo
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-4">Fecha</th>
+                    <th>Proveedor</th>
+                    <th>Producto</th>
+                    <th>Cant.</th>
+                    <th>Estado</th>
+                    <th>Motivo</th>
+                    <th class="text-end pe-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reclamo in reclamos %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-medium text-dark">{{ reclamo.fecha_reclamo|date:"d/m/Y" }}</div>
+                        <div class="text-muted extra-small">#{{ reclamo.pk }}</div>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ reclamo.proveedor.nombre }}</div>
+                        {% if reclamo.compra %}
+                        <div class="text-primary small fw-bold">Doc: {{ reclamo.compra.numero_documento }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ reclamo.producto.nombre }}</div>
+                        <div class="text-muted small">{{ reclamo.producto.sku_codigo }}</div>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ reclamo.cantidad }}</span></td>
+                    <td>
+                        {% if reclamo.estado == 'Pendiente' %}
+                        <span class="badge rounded-pill bg-warning-subtle text-warning px-3 border border-warning-subtle">Pendiente</span>
+                        {% elif reclamo.estado == 'Devuelto' %}
+                        <span class="badge rounded-pill bg-danger-subtle text-danger px-3 border border-danger-subtle">Devuelto</span>
+                        {% elif reclamo.estado == 'Resuelto (Garantía)' %}
+                        <span class="badge rounded-pill bg-success-subtle text-success px-3 border border-success-subtle">Resuelto</span>
+                        {% else %}
+                        <span class="badge rounded-pill bg-secondary-subtle text-secondary px-3">{{ reclamo.estado }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="text-truncate" style="max-width: 200px;" title="{{ reclamo.motivo }}">
+                            {{ reclamo.motivo }}
+                        </div>
+                    </td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-sm btn-light border rounded-pill shadow-sm" onclick="alert('Funcionalidad de edición en desarrollo')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="fas fa-shield-alt fa-3x mb-3 text-light"></i>
+                            <p>No hay reclamos registrados.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .extra-small { font-size: 0.7rem; }
+</style>
+{% endblock %}

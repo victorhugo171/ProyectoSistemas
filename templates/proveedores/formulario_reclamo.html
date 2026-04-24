@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Reclamo{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-header bg-danger text-white p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="icon-box bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <i class="fas fa-exclamation-triangle text-danger fs-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 fw-bold">Registrar Reclamo / Devolución</h3>
+                            <p class="text-white-50 small mb-0">Gestión de fallas y garantías con proveedores</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <div class="alert alert-warning border-0 shadow-sm rounded-3 small mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Nota importante:</strong> Si el estado se marca como <strong>"Devuelto al Proveedor"</strong>, el sistema descontará automáticamente el stock del producto seleccionado.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold text-dark small text-uppercase">Proveedor Suministrador</label>
+                                {{ form.proveedor }}
+                                {% if form.proveedor.errors %}<div class="text-danger small mt-1">{{ form.proveedor.errors }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold text-dark small text-uppercase">Compra de Referencia (Opcional)</label>
+                                {{ form.compra }}
+                                <div class="form-text small">Ayuda a identificar la fecha y lote de adquisición.</div>
+                            </div>
+
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold text-dark small text-uppercase">Producto Defectuoso</label>
+                                {{ form.producto }}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-dark small text-uppercase">Cantidad</label>
+                                {{ form.cantidad }}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold text-dark small text-uppercase">Motivo del Reclamo / Descripción de la Falla</label>
+                                {{ form.motivo }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark small text-uppercase">Estado del Reclamo</label>
+                                {{ form.estado }}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold text-dark small text-uppercase">Resolución del Proveedor</label>
+                                {{ form.resolucion }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 mt-5">
+                            <button type="submit" class="btn btn-danger px-5 py-2 rounded-pill shadow-sm fw-bold">
+                                <i class="fas fa-save me-2"></i> Registrar Reclamo
+                            </button>
+                            <a href="{% url 'lista_reclamos' %}" class="btn btn-light px-4 py-2 rounded-pill border">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border: 1.5px solid #f1f3f5;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        background-color: #f8fafc;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1);
+        background-color: #fff;
+    }
+</style>
+{% endblock %}

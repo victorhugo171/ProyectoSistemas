@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de Compras{% endblock %}
+
+{% block content %}
+<div class="page-header-responsive mb-4">
+    <div>
+        <h2 class="fw-bold mb-0 text-dark">Aprovisionamiento</h2>
+        <p class="text-muted small mb-0">Historial de entradas de mercadería y compras masivas</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'registrar_compra' %}" class="btn btn-primary btn-responsive rounded-pill px-4 shadow-sm">
+            <i class="fas fa-cart-plus me-2"></i> Nueva Compra Masiva
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary-subtle text-primary rounded-3 p-3">
+                    <i class="fas fa-file-invoice-dollar fs-4"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted small mb-0">Total Compras</h6>
+                    <h4 class="fw-bold mb-0">{{ compras.count }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white py-3 border-bottom border-light">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">Últimos Movimientos</h5>
+            <div class="input-group input-group-sm" style="max-width: 300px;">
+                <span class="input-group-text bg-light border-0"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control bg-light border-0" placeholder="Buscar compra...">
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-4">Fecha</th>
+                    <th>Documento</th>
+                    <th>Proveedor</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Registrado por</th>
+                    <th class="text-end pe-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for compra in compras %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-medium text-dark">{{ compra.fecha|date:"d/m/Y" }}</div>
+                        <div class="text-muted small">{{ compra.fecha|date:"H:i" }}</div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border fw-medium">{{ compra.tipo_documento }}</span>
+                        <div class="small fw-bold mt-1 text-primary">{{ compra.numero_documento }}</div>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ compra.proveedor.nombre }}</div>
+                        <div class="text-muted small">NIT: {{ compra.proveedor.nit_documento }}</div>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill bg-info-subtle text-info px-3">
+                            {{ compra.detalles.count }} productos
+                        </span>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-success">Bs. {{ compra.total }}</div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar bg-light text-dark small fw-bold" style="width: 24px; height: 24px;">{{ compra.usuario.username.0|upper }}</div>
+                            <span class="small">{{ compra.usuario.username }}</span>
+                        </div>
+                    </td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-sm btn-light border rounded-pill shadow-sm px-3" onclick="alert('Ver detalle en desarrollo...')">
+                            <i class="fas fa-eye me-1"></i> Ver Detalle
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="fas fa-box-open fa-3x mb-3 text-light"></i>
+                            <p>No hay compras registradas en el sistema.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

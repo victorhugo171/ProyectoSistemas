@@ -151,6 +151,7 @@
         <h2>Acceso al Sistema</h2>
         <span class="login-subtitle">Por favor ingrese sus credenciales</span>
 
+        <!-- FLUJO DE ACCESO: ENVÍA LAS CREDENCIALES AL SISTEMA DE AUTENTICACIÓN DE DJANGO -->
         <form method="post" autocomplete="off">
             {% csrf_token %}
             {% for field in form %}
@@ -171,6 +172,7 @@
 
         <div class="login-footer">
             ¿No tienes cuenta? 
+            <!-- FLUJO: LLEVA A LA PÁGINA DE REGISTRO PARA NUEVOS CLIENTES -->
             <a href="{% url 'registrar' %}">Regístrate ahora</a>
         </div>
     </div>

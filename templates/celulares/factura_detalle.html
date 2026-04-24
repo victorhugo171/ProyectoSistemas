@@ -290,17 +290,42 @@
     }
 </style>
 
-<!-- Header buttons -->
 <div class="mb-4 d-flex justify-content-between align-items-center no-print">
     <a href="{% url 'inicio' %}" class="btn btn-outline-dark rounded-pill px-4 shadow-sm">
         <i class="fas fa-chevron-left me-2"></i> Volver al Inicio
     </a>
 </div>
 
+{% if factura.venta.pago.estado == 'Pendiente' %}
+<div class="alert alert-warning border-0 rounded-4 shadow-sm p-4 mb-4 no-print animate__animated animate__pulse animate__infinite">
+    <div class="d-flex gap-3 align-items-center">
+        <div class="icon-box bg-warning bg-opacity-10 text-warning" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-clock fa-lg"></i>
+        </div>
+        <div>
+            <h5 class="fw-bold mb-1">Pago en proceso de revisión</h5>
+            <p class="mb-0 text-muted">Tu pago mediante <strong>{{ factura.venta.pago.metodo }}</strong> está siendo verificado por un administrador. Podrás imprimir tu factura una vez sea confirmado.</p>
+        </div>
+    </div>
+</div>
+{% elif factura.venta.pago.estado == 'Rechazado' %}
+<div class="alert alert-danger border-0 rounded-4 shadow-sm p-4 mb-4 no-print">
+    <div class="d-flex gap-3 align-items-center">
+        <div class="icon-box bg-danger bg-opacity-10 text-danger" style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-times-circle fa-lg"></i>
+        </div>
+        <div>
+            <h5 class="fw-bold mb-1">Pago Rechazado</h5>
+            <p class="mb-0 text-muted">Lo sentimos, tu pago no pudo ser validado. Tu pedido ha sido cancelado. Por favor, contacta con soporte o intenta con otro método.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="siat-container">
     <!-- Removed SIAT top bar -->
 
-    <!-- Main Title -->
+    <!-- FLUJO FINAL: ESTA PÁGINA ES EL DESTINO DESPUÉS DE 'procesar_venta' -->
     <div class="verification-header">
         <h2>Detalle de Factura Electrónica</h2>
     </div>
@@ -328,7 +353,19 @@
                     <div class="icon-box"><i class="fas fa-shield-alt"></i></div>
                     <div class="data-box">
                         <label>Estado de Transacción:</label>
-                        <span class="status-badge">Documento Válido</span>
+                        {% if factura.venta.pago.estado == 'Pendiente' %}
+                            <span class="status-badge" style="background: #fef3c7; color: #92400e; border-color: #fde68a;">
+                                <i class="fas fa-clock me-1"></i> Pendiente de Confirmación
+                            </span>
+                        {% elif factura.venta.pago.estado == 'Rechazado' %}
+                            <span class="status-badge" style="background: #fee2e2; color: #b91c1c; border-color: #fecaca;">
+                                <i class="fas fa-times-circle me-1"></i> Pago Rechazado
+                            </span>
+                        {% else %}
+                            <span class="status-badge">
+                                <i class="fas fa-check-circle me-1"></i> Documento Válido / Pagado
+                            </span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -452,10 +489,16 @@
 
     <!-- Action Bar -->
     <div class="siat-actions no-print">
+        {% if factura.venta.pago.estado == 'Completado' %}
         <a href="#" onclick="window.print()" class="btn-siat-action">
             <i class="fas fa-print"></i> Imprimir Comprobante
             <i class="fas fa-check-circle ms-2 small"></i>
         </a>
+        {% else %}
+        <button class="btn btn-secondary rounded-pill px-5 py-3 fw-bold" disabled style="opacity: 0.6; cursor: not-allowed;">
+            <i class="fas fa-lock me-2"></i> Imprimir Bloqueado (Esperando confirmación)
+        </button>
+        {% endif %}
     </div>
 </div>
 

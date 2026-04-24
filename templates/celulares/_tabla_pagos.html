@@ -1,0 +1,61 @@
+<div class="table-responsive">
+    <table class="table-custom">
+        <thead>
+            <tr>
+                <th>Venta/ID</th>
+                <th>Cliente</th>
+                <th>Vendedor/Usuario</th>
+                <th>Método</th>
+                <th>Total</th>
+                <th class="text-center">Estado</th>
+                <th class="text-end">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pago in pagos %}
+            <tr>
+                <td>
+                    <div class="fw-bold">Venta #{{ pago.venta.pk }}</div>
+                    <small class="text-muted">{{ pago.fecha_pago|date:"d/m/Y H:i" }}</small>
+                </td>
+                <td>
+                    <div class="fw-bold">{{ pago.venta.cliente.nombre }}</div>
+                    <small class="text-muted">NIT: {{ pago.venta.cliente.documento }}</small>
+                </td>
+                <td>
+                    <span class="badge bg-light text-dark fw-bold border">{{ pago.venta.usuario.username }}</span>
+                </td>
+                <td>
+                    <i class="fas fa-qrcode text-primary me-2"></i> {{ pago.metodo }}
+                </td>
+                <td>
+                    <span class="fw-900 text-primary">Bs. {{ pago.monto }}</span>
+                </td>
+                <td class="text-center">
+                    <span class="status-pill pill-pending">Pendiente de Revisión</span>
+                </td>
+                <td class="text-end">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'confirmar_pago' pago.pk %}" class="btn-action btn-confirm" title="Confirmar Pago">
+                            <i class="fas fa-check"></i>
+                        </a>
+                        <a href="{% url 'rechazar_pago' pago.pk %}" class="btn-action btn-reject" title="Rechazar Pago" onclick="return confirm('¿Está seguro de rechazar este pago? El stock será devuelto al inventario.')">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center py-5">
+                    <div class="icon-box bg-light text-muted mx-auto mb-4" style="width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-search fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold">No hay pagos pendientes</h5>
+                    <p class="text-muted">¡Buen trabajo! Todo el registro de pagos está al día.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

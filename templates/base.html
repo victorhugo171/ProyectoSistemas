@@ -14,6 +14,9 @@
         :root {
             --primary: #6366f1;
             --primary-hover: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --info: #3b82f6;
             --sidebar-bg: #111827;
             --sidebar-item-hover: #1f2937;
             --sidebar-text: #9ca3af;
@@ -406,6 +409,7 @@
                 SISTEMA
             </div>
             <ul class="sidebar-menu">
+                <!-- NAVEGACIÓN: LLEVA AL CATÁLOGO DE PRODUCTOS (INICIO) -->
                 <li class="{% if request.resolver_match.url_name == 'lista_celulares' or request.resolver_match.url_name == 'inicio' %}active{% endif %}">
                     <a href="{% url 'inicio' %}">
                         <i class="fas fa-mobile-alt"></i> Celulares
@@ -413,6 +417,7 @@
                 </li>
                 
                 {% if user.is_superuser or user.rol == 'Administrador' %}
+                <!-- GESTIÓN: SOLO VISIBLE PARA ADMINISTRADORES. LLEVA A LA LISTA DE USUARIOS -->
                 <li class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
                     <a href="{% url 'home' %}">
                         <i class="fas fa-users-cog"></i> Gestión de Usuarios
@@ -421,11 +426,22 @@
                 {% endif %}
 
                 {% if user.is_superuser or user.rol == 'Administrador' %}
+                <!-- PANEL DE VENTAS: LISTADO HISTÓRICO DE FACTURAS -->
                 <li class="{% if request.resolver_match.url_name == 'reporte_ventas' %}active{% endif %}">
                     <a href="{% url 'reporte_ventas' %}">
                         <i class="fas fa-cash-register"></i> Panel de Ventas
                     </a>
                 </li>
+                <!-- GESTIÓN DE PAGOS: LISTADO DE PAGOS POR QR QUE REQUIEREN REVISIÓN -->
+                <li class="{% if request.resolver_match.url_name == 'pagos_pendientes' %}active{% endif %}">
+                    <a href="{% url 'pagos_pendientes' %}">
+                        <i class="fas fa-money-check-alt"></i> Pagos pendientes
+                        {% if pendientes_count > 0 %}
+                        <span class="badge-count bg-warning text-dark">{{ pendientes_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <!-- INVENTARIO: VISTA RÁPIDA DE STOCK Y ALERTAS -->
                 <li class="{% if request.resolver_match.url_name == 'lista_inventario' %}active{% endif %}">
                     <a href="{% url 'lista_inventario' %}">
                         <i class="fas fa-boxes"></i> Inventario
@@ -434,10 +450,28 @@
                         {% endif %}
                     </a>
                 </li>
+
+                <!-- MÓDULO DE PROVEEDORES -->
+                <li class="sidebar-header mt-3" style="padding: 12px 24px; font-size: 0.65rem; opacity: 0.5;">PROVEEDORES Y COMPRAS</li>
+                
+                <li class="{% if 'proveedor' in request.path and 'compras' not in request.path and 'reclamos' not in request.path %}active{% endif %}">
+                    <a href="{% url 'lista_proveedores' %}">
+                        <i class="fas fa-truck"></i> Proveedores
+                    </a>
+                </li>
+                <li class="{% if 'compras' in request.path %}active{% endif %}">
+                    <a href="{% url 'lista_compras' %}">
+                        <i class="fas fa-file-invoice-dollar"></i> Aprovisionamiento
+                    </a>
+                </li>
+                <li class="{% if 'reclamos' in request.path %}active{% endif %}">
+                    <a href="{% url 'lista_reclamos' %}">
+                        <i class="fas fa-exclamation-triangle"></i> Reclamos
+                    </a>
+                </li>
                 {% endif %}
 
-
-
+                <!-- CARRITO: ACCESO AL RESUMEN DE COMPRA ACTUAL -->
                 <li class="{% if request.resolver_match.url_name == 'ver_carrito' %}active{% endif %}">
                     <a href="{% url 'ver_carrito' %}">
                         <i class="fas fa-shopping-cart"></i> Carrito
@@ -490,6 +524,26 @@
 
             <!-- Page Content -->
             <div class="main-content">
+                {% if messages %}
+                <div class="messages mb-4 px-2">
+                    {% for message in messages %}
+                    <div class="alert alert-dismissible fade show rounded-4 border-0 shadow-sm animate__animated animate__fadeInDown" role="alert" 
+                         style="background: white; border-left: 5px solid {% if message.tags == 'success' %}var(--success){% elif message.tags == 'error' %}var(--accent-red){% elif message.tags == 'warning' %}var(--warning){% else %}var(--info){% endif %} !important; border: 1px solid var(--border-color); padding: 1.25rem 1rem;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div style="background: {% if message.tags == 'success' %}var(--success){% elif message.tags == 'error' %}var(--accent-red){% elif message.tags == 'warning' %}var(--warning){% else %}var(--info){% endif %}; opacity: 0.1; width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; position: absolute; left: 16px;"></div>
+                            <div style="margin-left: 52px;">
+                                <div class="fw-bold" style="color: {% if message.tags == 'success' %}var(--success){% elif message.tags == 'error' %}var(--accent-red){% elif message.tags == 'warning' %}var(--warning){% else %}var(--info){% endif %}; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; line-height: 1;">
+                                    {% if message.tags == 'error' %}ERROR{% elif message.tags == 'success' %}ÉXITO{% elif message.tags == 'warning' %}AVISO{% else %}INFO{% endif %}
+                                </div>
+                                <div class="fw-bold text-dark mt-1" style="font-size: 0.95rem; line-height: 1.2;">{{ message }}</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="top: 50%; transform: translateY(-50%);"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 {% block content %}
                 {% endblock %}
             </div>
@@ -530,7 +584,109 @@
             document.getElementById('sidebar').classList.toggle('mobile-show');
             document.getElementById('sidebarOverlay').classList.toggle('active');
         }
+
+        // --- SISTEMA DE PERSISTENCIA DE FORMULARIOS (AUTOSAVE) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname;
+            const forms = document.querySelectorAll('form');
+
+            forms.forEach(form => {
+                // No persistir formularios de búsqueda o logout
+                if (form.getAttribute('action') && (form.getAttribute('action').includes('logout') || form.classList.contains('search-bar'))) return;
+
+                // 1. Cargar datos guardados
+                const savedData = JSON.parse(localStorage.getItem(`form_data_${currentPath}`) || '{}');
+                Object.keys(savedData).forEach(name => {
+                    const input = form.querySelector(`[name="${name}"]`);
+                    if (input) {
+                        if (input.type === 'checkbox' || input.type === 'radio') {
+                            input.checked = savedData[name];
+                        } else {
+                            input.value = savedData[name];
+                        }
+                    }
+                });
+
+                // 2. Escuchar cambios para guardar
+                form.addEventListener('input', (e) => {
+                    const input = e.target;
+                    if (!input.name) return;
+
+                    const currentData = JSON.parse(localStorage.getItem(`form_data_${currentPath}`) || '{}');
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        currentData[input.name] = input.checked;
+                    } else {
+                        currentData[input.name] = input.value;
+                    }
+                    localStorage.setItem(`form_data_${currentPath}`, JSON.stringify(currentData));
+                });
+
+                // 3. Limpiar al enviar con éxito
+                form.addEventListener('submit', () => {
+                    localStorage.removeItem(`form_data_${currentPath}`);
+                });
+            });
+        });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+{% if request.user.is_authenticated and request.user.rol in 'Administrador Vendedor' or request.user.is_superuser %}
+<!-- SCRIPT DE POLLING PARA ADMIN (TIEMPO REAL) -->
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 2100;">
+  <div id="newPaymentToast" class="toast border-0 shadow-lg rounded-4" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header bg-warning text-dark border-0 rounded-top-4 p-3">
+      <i class="fas fa-bell me-2"></i>
+      <strong class="me-auto">Nuevo Pago Pendiente</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body p-3 fw-bold">
+      Se ha recibido un nuevo pago que requiere tu validación.
+      <div class="mt-2">
+        <a href="{% url 'pagos_pendientes' %}" class="btn btn-sm btn-dark rounded-pill px-3">Ver ahora</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    const adminApiUrl = "{% url 'api_notificaciones_admin' %}";
+    let lastAdminCount = {{ pendientes_count|default:0 }};
+
+    function updateAdminBadge() {
+        fetch(adminApiUrl)
+            .then(res => res.json())
+            .then(data => {
+                const badge = document.querySelector('a[href*="pagos-pendientes"] .badge-count');
+                const link = document.querySelector('a[href*="pagos-pendientes"]');
+                
+                if (data.count > 0) {
+                    if (badge) {
+                        badge.innerText = data.count;
+                    } else if (link) {
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'badge-count bg-warning text-dark';
+                        newBadge.innerText = data.count;
+                        link.appendChild(newBadge);
+                    }
+
+                    // Si el contador aumentó, mostramos la notificación
+                    if (data.count > lastAdminCount) {
+                        const toastEl = document.getElementById('newPaymentToast');
+                        const toast = new bootstrap.Toast(toastEl);
+                        toast.show();
+                    }
+                } else if (badge) {
+                    badge.remove();
+                }
+                lastAdminCount = data.count;
+            })
+            .catch(err => console.error('Error polling admin notifications:', err));
+    }
+
+    // Consultar cada 5 segundos para una experiencia "en vivo"
+    setInterval(updateAdminBadge, 5000);
+</script>
+{% endif %}
 </body>
 </html>

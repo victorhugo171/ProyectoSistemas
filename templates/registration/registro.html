@@ -192,6 +192,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const noSpaceFields = [usernameField, emailField, password1Field, password2Field];
 
+    // Validación en tiempo real para contraseñas
+    const validatePassword = () => {
+        const password = password1Field.value;
+        const confirmPassword = password2Field.value;
+        
+        // Limpiar errores previos de longitud
+        const existingLengthError = password1Field.parentElement.querySelector('.dynamic-error');
+        if (existingLengthError) existingLengthError.remove();
+        
+        if (password.length > 0 && password.length < 8) {
+            const errorDiv = document.createElement('ul');
+            errorDiv.className = 'errorlist dynamic-error';
+            errorDiv.style.marginTop = '8px';
+            errorDiv.innerHTML = `<li><i class="fas fa-exclamation-circle"></i> La contraseña debe tener al menos 8 caracteres.</li>`;
+            password1Field.parentElement.appendChild(errorDiv);
+            password1Field.style.borderColor = '#ef4444';
+        } else if (password.length >= 8) {
+            password1Field.style.borderColor = '#10b981'; // Verde si es correcto
+        } else {
+            password1Field.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+        }
+
+        // Validación de coincidencia
+        const existingMatchError = password2Field.parentElement.querySelector('.dynamic-error');
+        if (existingMatchError) existingMatchError.remove();
+
+        if (confirmPassword.length > 0) {
+            if (password !== confirmPassword) {
+                const errorDiv = document.createElement('ul');
+                errorDiv.className = 'errorlist dynamic-error';
+                errorDiv.style.marginTop = '8px';
+                errorDiv.innerHTML = `<li><i class="fas fa-exclamation-circle"></i> Las contraseñas no coinciden.</li>`;
+                password2Field.parentElement.appendChild(errorDiv);
+                password2Field.style.borderColor = '#ef4444';
+            } else {
+                password2Field.style.borderColor = '#10b981';
+            }
+        } else {
+            password2Field.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+        }
+    };
+
+    if (password1Field) {
+        password1Field.addEventListener('input', validatePassword);
+        password1Field.addEventListener('blur', validatePassword);
+    }
+    if (password2Field) {
+        password2Field.addEventListener('input', validatePassword);
+        password2Field.addEventListener('blur', validatePassword);
+    }
+
     // Prevenir espacio al escribir
     noSpaceFields.forEach(field => {
         if (field) {
@@ -218,16 +269,17 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => el.remove(), 200);
         });
 
-        // Validación extra frontend: longitud de contraseña
+        // Validación final de contraseñas antes de enviar
         if (password1Field && password1Field.value.length < 8) {
-            const errorDiv = document.createElement('ul');
-            errorDiv.className = 'errorlist';
-            errorDiv.style.marginTop = '8px';
-            errorDiv.innerHTML = `<li><i class="fas fa-exclamation-circle"></i> La contraseña debe tener al menos 8 caracteres.</li>`;
-            password1Field.parentElement.appendChild(errorDiv);
-            password1Field.style.borderColor = '#ef4444';
+            validatePassword(); // Asegurar que el error sea visible
             password1Field.focus();
-            return; // Detener envío
+            return;
+        }
+
+        if (password2Field && password1Field.value !== password2Field.value) {
+            validatePassword();
+            password2Field.focus();
+            return;
         }
         
         const formData = new FormData(this);

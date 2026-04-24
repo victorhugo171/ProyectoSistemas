@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Procesando Pago{% endblock %}
+
+{% block content %}
+<style>
+    .waiting-container {
+        max-width: 600px;
+        margin: 60px auto;
+        text-align: center;
+        background: white;
+        padding: 60px 40px;
+        border-radius: 30px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .loader-box {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 40px;
+    }
+
+    .spinner-main {
+        width: 100%;
+        height: 100%;
+        border: 10px solid #f3f4f6;
+        border-top: 10px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 1.5s linear infinite;
+    }
+
+    .qr-icon-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: var(--primary);
+        font-size: 2.5rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .status-text {
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: #111827;
+        margin-bottom: 12px;
+    }
+
+    .pulse-text {
+        color: var(--sidebar-text);
+        font-weight: 600;
+        animation: pulseOpacity 2s infinite;
+    }
+
+    @keyframes pulseOpacity {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .step-list {
+        text-align: left;
+        background: #f9fafb;
+        padding: 24px;
+        border-radius: 20px;
+        margin-top: 40px;
+    }
+
+    .step-item {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .step-item:last-child { margin-bottom: 0; }
+
+    .step-check {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #dcfce7;
+        color: #166534;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+    }
+
+    .step-pending {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #f3f4f6;
+        color: #9ca3af;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+    }
+</style>
+
+<div class="waiting-container">
+    <div class="loader-box">
+        <div class="spinner-main"></div>
+        <div class="qr-icon-overlay">
+            <i class="fas fa-qrcode"></i>
+        </div>
+    </div>
+
+    <h2 class="status-text">Validando tu transferencia</h2>
+    <p class="pulse-text">Estamos verificando tu comprobante en tiempo real...</p>
+    
+    <div class="alert alert-info border-0 rounded-4 p-3 mt-4 small fw-bold">
+        <i class="fas fa-info-circle me-2"></i> No cierres esta ventana. Se actualizará automáticamente al recibir la confirmación del administrador.
+    </div>
+
+    <div class="step-list">
+        <div class="step-item">
+            <div class="step-check"><i class="fas fa-check"></i></div>
+            <div class="small fw-bold">Registro de pedido completado</div>
+        </div>
+        <div class="step-item">
+            <div class="step-check" id="step2-icon"><i class="fas fa-check"></i></div>
+            <div class="small fw-bold">Transferencia enviada</div>
+        </div>
+        <div class="step-item">
+            <div class="step-pending" id="step3-icon"><i class="fas fa-circle"></i></div>
+            <div class="small fw-bold text-muted" id="step3-text">Esperando aprobación del administrador</div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito -->
+<div class="modal fade" id="successModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body p-5 text-center">
+                <div class="mb-4" style="font-size: 4rem; color: var(--success);">
+                    <i class="fas fa-check-circle animate__animated animate__bounceIn"></i>
+                </div>
+                <h3 class="fw-900 mb-2">¡Pago Confirmado!</h3>
+                <p class="text-muted mb-4">El administrador ha validado tu transferencia correctamente. Tu factura ya está disponible.</p>
+                <a href="#" id="view-factura-btn" class="btn btn-dark w-100 rounded-pill py-3 fw-bold">
+                    <i class="fas fa-file-invoice me-2"></i> VER MI FACTURA
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Rechazo -->
+<div class="modal fade" id="errorModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body p-5 text-center">
+                <div class="mb-4" style="font-size: 4rem; color: var(--accent-red);">
+                    <i class="fas fa-times-circle animate__animated animate__shakeX"></i>
+                </div>
+                <h3 class="fw-900 mb-2">Pago no verificado</h3>
+                <p class="text-muted mb-4">Lo sentimos, no pudimos validar tu transferencia. Contacta con nosotros o intenta nuevamente.</p>
+                <a href="{% url 'inicio' %}" class="btn btn-outline-dark w-100 rounded-pill py-3 fw-bold">
+                    VOLVER AL CATÁLOGO
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ventaId = "{{ venta.pk }}";
+    const statusUrl = "{% url 'api_get_venta_status' 0 %}".replace('0', ventaId);
+    let pollingActive = true;
+
+    function checkStatus() {
+        if (!pollingActive) return;
+
+        fetch(statusUrl)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'Pagada' && data.factura_pk) {
+                    pollingActive = false;
+                    // Actualizar UI
+                    document.getElementById('step3-icon').className = 'step-check';
+                    document.getElementById('step3-icon').innerHTML = '<i class="fas fa-check"></i>';
+                    document.getElementById('step3-text').className = 'small fw-bold';
+                    document.getElementById('step3-text').innerText = 'Pago aprobado y facturado';
+                    
+                    // Mostrar Modal
+                    const btn = document.getElementById('view-factura-btn');
+                    btn.href = `/factura/${data.factura_pk}/`;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('successModal'));
+                    modal.show();
+                } else if (data.status === 'Cancelada') {
+                    pollingActive = false;
+                    const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+                    modal.show();
+                }
+            })
+            .catch(err => console.error('Error polling status:', err));
+    }
+
+    // Consultar cada 5 segundos
+    setInterval(checkStatus, 5000);
+</script>
+{% endblock %}
